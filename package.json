@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://rafasantos.github.io/twilio-sms-web/",
+  "homepage": "https://akrimahuzaifa.github.io/twilio-sms-web/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
