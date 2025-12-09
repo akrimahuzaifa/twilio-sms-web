@@ -37,12 +37,7 @@ const NavBar = () => {
             <span className="mt-1">Send</span>
           </NavItem>
         </div>
-        <div className="grow flex justify-center items-center text-lg">
-          Twilio SMS Web by{" "}
-          <a href="https://github.com/akrimahuzaifa" className="underline">
-            AHK
-          </a>
-        </div>
+        <div className="grow flex justify-center items-center text-lg">Twilio SMS Web</div>
       </nav>
     </>
   )
@@ -84,7 +79,12 @@ export const Layout = ({ children }) => (
 export const LayoutWithoutNavBar = ({ children }) => (
   <div className="flex flex-col h-full">
     <div className="flex h-14">
-      <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">Twilio SMS Web</div>
+      <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">
+        Twilio SMS Web by{" "}
+        <a href="https://github.com/akrimahuzaifa" className="underline">
+          AHK
+        </a>
+      </div>
     </div>
     <div className="flex grow">
       <div className="bg-gray-200 grow"></div>
