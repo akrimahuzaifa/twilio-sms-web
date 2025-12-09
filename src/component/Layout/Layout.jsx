@@ -57,6 +57,17 @@ const Footer = () => (
         <span className="mx-2">Terms and Conditions</span>
       </a>
     </span>
+    <span className="block">
+      Developed by{" "}
+      <a
+        href="https://github.com/akrimahuzaifa"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-white underline"
+      >
+        AHK
+      </a>
+    </span>
   </div>
 )
 
@@ -79,15 +90,7 @@ export const Layout = ({ children }) => (
 export const LayoutWithoutNavBar = ({ children }) => (
   <div className="flex flex-col h-full">
     <div className="flex h-14">
-      <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">
-        Twilio SMS Web{" "}
-        <span>
-          by{" "}
-          <a href="https://github.com/akrimahuzaifa" target="_blank" className="underline">
-            AHK
-          </a>
-        </span>
-      </div>
+      <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">Twilio SMS Web</div>
     </div>
     <div className="flex grow">
       <div className="bg-gray-200 grow"></div>
