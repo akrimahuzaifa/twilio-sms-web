@@ -81,8 +81,8 @@ export const LayoutWithoutNavBar = ({ children }) => (
     <div className="flex h-14">
       <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">
         Twilio SMS Web by{" "}
-        <a href="https://github.com/akrimahuzaifa" className="underline">
-          AHK
+        <a href="https://github.com/akrimahuzaifa" target="_blank" className="underline">
+          AHK LayoutWithoutNavBar
         </a>
       </div>
     </div>
