@@ -80,10 +80,13 @@ export const LayoutWithoutNavBar = ({ children }) => (
   <div className="flex flex-col h-full">
     <div className="flex h-14">
       <div className="bg-violet-900 grow flex justify-center items-center text-lg text-white">
-        Twilio SMS Web by{" "}
-        <a href="https://github.com/akrimahuzaifa" target="_blank" className="underline">
-          AHK LayoutWithoutNavBar
-        </a>
+        Twilio SMS Web{" "}
+        <span>
+          by{" "}
+          <a href="https://github.com/akrimahuzaifa" target="_blank" className="underline">
+            AHK
+          </a>
+        </span>
       </div>
     </div>
     <div className="flex grow">
