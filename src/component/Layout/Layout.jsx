@@ -37,7 +37,12 @@ const NavBar = () => {
             <span className="mt-1">Send</span>
           </NavItem>
         </div>
-        <div className="grow flex justify-center items-center text-lg">Twilio SMS Web</div>
+        <div className="grow flex justify-center items-center text-lg">
+          Twilio SMS Web by{" "}
+          <a href="https://github.com/akrimahuzaifa" className="underline">
+            AHK
+          </a>
+        </div>
       </nav>
     </>
   )
