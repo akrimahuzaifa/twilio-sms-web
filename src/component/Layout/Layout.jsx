@@ -51,12 +51,12 @@ const Footer = () => (
         <span className="mx-2">GitHub</span>
       </span>
     </a>
-    <span className="block">
+    {/* <span className="block">
       <a href={termsAndConditionsUrl} className="text-white">
         <FileTextFilled />
         <span className="mx-2">Terms and Conditions</span>
       </a>
-    </span>
+    </span> */}
     <span className="block">
       Developed by{" "}
       <a
