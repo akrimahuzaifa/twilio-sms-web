@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { useAuthentication } from "../../context/AuthenticationProvider"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
@@ -14,18 +14,33 @@ export const SendPage = () => {
   const [phoneNumbers, setPhoneNumbers] = useState([])
   const [from, setFrom] = useState(fromParam ?? "")
   const [to, setTo] = useState(toParam ?? "")
-  const [message, setMessage] = useState("")
+  // Signature is prefilled with two blank lines above it so user types message in the first lines.
+  const defaultSignature = import.meta.env.VITE_SMS_SIGNATURE ?? "Reply HELP for help. Reply STOP to unsubscribe."
+  const signatureString = `\n\n${defaultSignature}`
+  const [message, setMessage] = useState(signatureString)
   const [loadingPhoneNumbers, setLoadingPhoneNumbers] = useState(true)
   const [sendingMessage, setSendingMessage] = useState(false)
   const [error, setError] = useState(null)
   const [authentication] = useAuthentication()
   const navigate = useNavigate()
+  const textareaRef = useRef(null)
 
   useEffect(() => {
     getTwilioPhoneNumbers()
       .then(setPhoneNumbers)
       .catch(setError)
       .finally(() => setLoadingPhoneNumbers(false))
+    // focus textarea and place caret at the start so user can type message in the first lines
+    setTimeout(() => {
+      try {
+        if (textareaRef?.current) {
+          textareaRef.current.focus()
+          textareaRef.current.setSelectionRange(0, 0)
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }, 0)
   }, [])
 
   const handleToOnChange = e => {
@@ -46,7 +61,9 @@ export const SendPage = () => {
   const isValid = () => {
     const isValidFrom = phoneNumbers.includes(from)
     const isValidTo = to.match(phonePattern) !== null
-    const isValidMessage = message.length > 0 && message.length < 500
+    // Consider only the user-typed portion (before the signature) for validation
+    const userPortion = message.includes(signatureString) ? message.split(signatureString)[0].trim() : message.trim()
+    const isValidMessage = userPortion.length > 0 && message.length < 500
     return !sendingMessage && isValidFrom && isValidTo && isValidMessage
   }
 
@@ -72,8 +89,10 @@ export const SendPage = () => {
         <input type="tel" value={to} pattern={phonePattern} onChange={handleToOnChange} disabled={sendingMessage} />
       </div>
       <textarea
+        ref={textareaRef}
         className="w-full mt-2 p-2"
         placeholder={hint}
+        value={message}
         onChange={i => setMessage(i.target.value)}
         minLength="1"
         maxLength="500"
