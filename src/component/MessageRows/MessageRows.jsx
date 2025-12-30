@@ -1,5 +1,5 @@
 import { InboxOutlined, SendOutlined } from "@ant-design/icons"
-import { fromNow } from "../../js/util"
+import dayjs from "dayjs"
 import { isEmpty } from "lodash"
 import { MessageDirection } from "../../js/types"
 import { MediaViewer } from "../MediaViewer/MediaViewer"
@@ -17,14 +17,14 @@ const MessageBubble = ({ message, onClick }) => {
   const isReceived = MessageDirection.received === message.direction
   const bubbleClass = isReceived
     ? "bg-white text-gray-800 self-start rounded-tr-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
-    : "bg-green-600 text-white self-end rounded-tl-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
+    : "bubble-outbound self-end rounded-tl-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
 
   return (
     <div key={message.messageSid} onClick={() => onClick(message)} className="mb-3 flex flex-col">
       <div className={`flex items-center ${isReceived ? "justify-start" : "justify-end"}`}>
         <div className={bubbleClass}>
           <div className="text-sm">{messageBody(message)}</div>
-          <div className="text-[10px] text-gray-400 mt-2 text-right">{fromNow(message.date)}</div>
+          <div className="text-[10px] mt-2 text-right timestamp">{message.date ? dayjs(message.date).format("MM/DD/YYYY, hh:mm:ss A") : ""}</div>
         </div>
       </div>
       {message.media > 0 && (

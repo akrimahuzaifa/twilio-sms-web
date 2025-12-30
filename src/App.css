@@ -40,3 +40,13 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Global chat styling */
+.timestamp {
+  color: #8ab8af;
+}
+
+.bubble-outbound {
+  background-color: #144d37;
+  color: #fff;
+}
