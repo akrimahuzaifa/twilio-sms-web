@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from "react"
+import { useAuthentication } from "../../context/AuthenticationProvider"
+import { sendTwilioMessage } from "../../js/sendTwilioMessage"
 import { Layout } from "../Layout/Layout"
 import { MessageRows } from "../MessageRows/MessageRows"
 import { allPhones, MessageFilterEnum, Selector } from "./Selector"
@@ -56,6 +58,9 @@ export const InboxPage = () => {
   const [selectedContact, setSelectedContact] = useState(undefined)
   const [lastSeen, setLastSeen] = useState(() => loadLastSeen())
   const pollingRef = useRef(false)
+  const [authentication] = useAuthentication()
+  const [replyText, setReplyText] = useState("")
+  const [sendingReply, setSendingReply] = useState(false)
 
   useEffect(() => {
     const run = async () => {
@@ -110,6 +115,26 @@ export const InboxPage = () => {
     saveLastSeen(updated)
   }
 
+  const handleSendReply = async () => {
+    if (!selectedContact) return
+    if (phoneNumber === allPhones) return
+    if (sendingReply) return
+    if (!replyText || replyText.length === 0 || replyText.length > 500) return
+
+    setSendingReply(true)
+    try {
+      await sendTwilioMessage(authentication, selectedContact, phoneNumber, replyText)
+      setReplyText("")
+      // refresh messages after sending
+      const ms = await getMessages(phoneNumber, messageFilter)
+      setMessages(ms)
+    } catch (e) {
+      setError(e)
+    } finally {
+      setSendingReply(false)
+    }
+  }
+
   const currentMessages = selectedContact
     ? messages.filter(m => otherFromMessage(m) === selectedContact)
     : messages
@@ -159,8 +184,28 @@ export const InboxPage = () => {
           <div className="mb-4">
             <h4 className="text-lg">{selectedContact ? `Conversation with ${selectedContact}` : "All messages"}</h4>
           </div>
-          <div className="flex-1 overflow-auto">
-            <MessageRows loading={loadingMessages} messages={currentMessages} />
+          <div className="flex-1 overflow-auto flex flex-col">
+            <div className="flex-1 overflow-auto">
+              <MessageRows loading={loadingMessages} messages={currentMessages} />
+            </div>
+            <div className="mt-2 pt-2 border-t flex items-end gap-2">
+              <textarea
+                className="flex-1 p-2 rounded"
+                placeholder={selectedContact ? `Reply to ${selectedContact}` : "Select a conversation to reply"}
+                value={replyText}
+                onChange={e => setReplyText(e.target.value)}
+                rows={2}
+                disabled={!selectedContact || phoneNumber === allPhones || sendingReply}
+                maxLength={500}
+              />
+              <button
+                className="ml-2 px-4 py-2"
+                onClick={handleSendReply}
+                disabled={!selectedContact || phoneNumber === allPhones || sendingReply || replyText.length === 0}
+              >
+                {sendingReply ? "Sending..." : "Send"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
