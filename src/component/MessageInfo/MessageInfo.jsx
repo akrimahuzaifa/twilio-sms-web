@@ -41,7 +41,7 @@ export const MessageInfo = ({ message }) => (
     </div>
     <div>
       <span className="capitalize inline-block w-full max-w-60 py-1">
-        <b>Timestamp:</b> {fromNow(message.date)}
+        <b>Timestamp:</b> <span className="timestamp">{fromNow(message.date)}</span>
       </span>
       <span
         className="capitalize hover:cursor-pointer active:text-gray-600"

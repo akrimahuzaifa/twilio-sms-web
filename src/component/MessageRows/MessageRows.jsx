@@ -1,97 +1,64 @@
 import { InboxOutlined, SendOutlined } from "@ant-design/icons"
-import { fromNow } from "../../js/util"
+import dayjs from "dayjs"
 import { isEmpty } from "lodash"
 import { MessageDirection } from "../../js/types"
 import { MediaViewer } from "../MediaViewer/MediaViewer"
 import { LoadingOutlined } from "@ant-design/icons"
 import { useNavigate } from "react-router"
+import { useEffect, useRef, useLayoutEffect } from "react"
+
 /**
  * @typedef {import("../../js/types").Message} Message
  */
 
-/**
- * @param {Message} message
- * @returns {boolean}
- */
-const isRead = message => message.isRead ?? false
+const messageBody = message => (isEmpty(message.body) && message.hasMedia ? "Message contains attachments" : message.body)
 
-/**
- * @param {Message} message
- * @returns {string}
- */
-const isReadContent = message => (isRead(message) ? "bg-gray-200 text-gray-600" : "bg-white")
+const MessageBubble = ({ message, onClick }) => {
+  const isReceived = MessageDirection.received === message.direction
+  const bubbleClass = isReceived
+    ? "bg-white text-gray-800 self-start rounded-tr-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
+    : "bubble-outbound self-end rounded-tl-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
 
-/**
- * @param {Message} message
- * @returns {string}
- */
-const isReadHeader = message => (isRead(message) ? "text-gray-400" : "text-gray-500")
-
-/**
- * @param {Message} message
- * @returns {string}
- */
-const messageBody = message =>
-  isEmpty(message.body) && message.hasMedia ? "Message contains attachments" : message.body
-
-/**
- * @param {Message} message
- */
-const MessageIcon = ({ message }) =>
-  MessageDirection.received === message.direction ? (
-    <InboxOutlined className="block text-[1.2rem] text-purple-900 w-8" />
-  ) : (
-    <SendOutlined className="block text-[1rem] text-purple-900 w-8" />
-  )
-
-/**
- * @param {Message} message
- */
-const MessageRow = (message, onClick) => {
   return (
-    <div
-      key={message.messageSid}
-      onClick={() => onClick(message)}
-      className={`flex
-  ${isReadContent(message)}
-  border-b-2 border-l-2 pr-1 min-h-32
-  hover:bg-purple-100 hover:cursor-pointer hover:border-l-purple-400
-  active:bg-purple-200`}
-    >
-      <div className="flex items-center justify-center">
-        <MessageIcon message={message} />
-      </div>
-      <div className="grow">
-        <div className={`${isReadHeader(message)} text-xs my-2 overflow-clip font-sans font-light`}>
-          <span className="inline-block w-32">
-            <b>To:</b>
-            {message.to}
-          </span>
-          <span className="inline-block w-36">
-            <b>From:</b>
-            {message.from}
-          </span>
-          <span className="hidden md:inline-block">
-            {message.direction} {fromNow(message.date)}
-          </span>
+    <div key={message.messageSid} onClick={() => onClick(message)} className="mb-3 flex flex-col">
+      <div className={`flex items-center ${isReceived ? "justify-start" : "justify-end"}`}>
+        <div className={bubbleClass}>
+          <div className="text-sm">{messageBody(message)}</div>
+          <div className="text-[10px] mt-2 text-right timestamp">{message.date ? dayjs(message.date).format("MM/DD/YYYY, hh:mm:ss A") : ""}</div>
         </div>
-        <div className="line-clamp-3">{messageBody(message)}</div>
-        {message.media > 0 && (
-          <div className="flex justify-center mb-2">
-            <MediaViewer messageSid={message.messageSid} thumbnail="true" />
-          </div>
-        )}
       </div>
+      {message.media > 0 && (
+        <div className={`mt-2 ${isReceived ? "self-start" : "self-end"}`}>
+          <MediaViewer messageSid={message.messageSid} thumbnail="true" />
+        </div>
+      )}
     </div>
   )
 }
 
 export const MessageRows = ({ loading = true, messages = [] }) => {
   const navigate = useNavigate()
+  const containerRef = useRef(null)
+  const lastMessageRef = useRef(null)
 
   const handleOnClick = message => {
     navigate(`/message/${message.messageSid}`)
   }
+
+  useLayoutEffect(() => {
+    // Prefer scrolling the last message into view for reliable placement
+    try {
+      if (lastMessageRef.current && typeof lastMessageRef.current.scrollIntoView === "function") {
+        lastMessageRef.current.scrollIntoView({ block: "end", behavior: "auto" })
+        return
+      }
+      if (containerRef.current) {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight
+      }
+    } catch (e) {
+      // swallow
+    }
+  }, [messages, loading])
 
   if (loading)
     return (
@@ -100,7 +67,20 @@ export const MessageRows = ({ loading = true, messages = [] }) => {
       </div>
     )
 
+  // Messages come in sorted newest-first; display oldest-first so newest appears at bottom
+  // messages array may contain optimistic items appended newest-first; normalize order
+  const ordered = (messages || []).slice().reverse()
+
   return (
-    <div className="border-2 border-b-0 border-l-0">{messages.map(message => MessageRow(message, handleOnClick))}</div>
+    <div ref={containerRef} className="border-2 border-b-0 border-l-0 p-4 flex flex-col overflow-auto">
+      {ordered.map((m, idx) => {
+        const isLast = idx === ordered.length - 1
+        return (
+          <div key={m.messageSid} ref={isLast ? lastMessageRef : null}>
+            <MessageBubble message={m} onClick={handleOnClick} />
+          </div>
+        )
+      })}
+    </div>
   )
 }
