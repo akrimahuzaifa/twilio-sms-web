@@ -1,5 +1,6 @@
 import { useState } from "react"
-import { Loading3QuartersOutlined } from "@ant-design/icons"
+import { Loading3QuartersOutlined, SendOutlined } from "@ant-design/icons"
+import { allPhones } from "../InboxPage/Selector"
 
 /**
  * Props:
@@ -49,18 +50,23 @@ export const ConversationComposer = ({ selectedContact, phoneNumber, authenticat
   }
 
   return (
-    <div className="mt-2 pt-2 border-t flex items-end gap-2">
+    <div className="mt-2 pt-2 border-t flex items-center gap-2">
       <textarea
         className="flex-1 p-2 rounded"
         placeholder={selectedContact ? `Reply to ${selectedContact}` : "Select a conversation to reply"}
         value={text}
         onChange={e => setText(e.target.value)}
         rows={2}
-        disabled={!selectedContact || phoneNumber === "ALL" || sending}
+        disabled={!selectedContact || phoneNumber === allPhones || sending}
         maxLength={500}
       />
-      <button className="ml-2 px-4 py-2" onClick={handleSend} disabled={!selectedContact || phoneNumber === "ALL" || sending || text.length === 0}>
-        {sending ? <Loading3QuartersOutlined spin /> : "Send"}
+      <button
+        className="ml-2 w-10 h-10 flex items-center justify-center rounded-full composer-send"
+        onClick={handleSend}
+        disabled={!selectedContact || phoneNumber === allPhones || sending || text.length === 0}
+        aria-label="Send message"
+      >
+        {sending ? <Loading3QuartersOutlined spin /> : <SendOutlined />}
       </button>
     </div>
   )

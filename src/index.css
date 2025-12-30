@@ -139,3 +139,19 @@ a:hover {
   background-color: #144d37;
   color: #fff;
 }
+
+/* Composer send button styles */
+.composer-send {
+  background-color: #21c063;
+  color: #ffffff;
+  border: none !important;
+  box-shadow: none;
+}
+.composer-send:hover:not(:disabled) {
+  background-color: #37c572;
+  color:#144d37;
+}
+.composer-send:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
