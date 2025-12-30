@@ -1,0 +1,69 @@
+import { useState } from "react"
+import { Loading3QuartersOutlined } from "@ant-design/icons"
+
+/**
+ * Props:
+ * - selectedContact (string)
+ * - phoneNumber (string)
+ * - onOptimisticSend(message) => append temporary message
+ * - onReplaceTempMessage(tempSid, realMessage) => replace temp with real
+ * - sendFunc(authentication, to, from, body) => Promise<sid>
+ * - authentication
+ */
+export const ConversationComposer = ({ selectedContact, phoneNumber, authentication, onOptimisticSend, onReplaceTempMessage, sendFunc }) => {
+  const [text, setText] = useState("")
+  const [sending, setSending] = useState(false)
+
+  const handleSend = async () => {
+    if (!selectedContact || !phoneNumber || !text || sending) return
+    const tempSid = `temp-${Date.now()}`
+    const tempMsg = {
+      messageSid: tempSid,
+      direction: "sent",
+      from: phoneNumber,
+      to: selectedContact,
+      status: "queued",
+      body: text,
+      media: 0,
+      date: new Date().toISOString(),
+      _optimistic: true,
+    }
+
+    // optimistic append
+    onOptimisticSend && onOptimisticSend(tempMsg)
+    setSending(true)
+    try {
+      const sid = await sendFunc(authentication, selectedContact, phoneNumber, text)
+      const realMsg = { ...tempMsg, messageSid: sid, _optimistic: false, status: "sent" }
+      onReplaceTempMessage && onReplaceTempMessage(tempSid, realMsg)
+      setText("")
+      return { ok: true, sid }
+    } catch (e) {
+      // mark failed by replacing with status
+      const failedMsg = { ...tempMsg, _optimistic: false, status: "failed" }
+      onReplaceTempMessage && onReplaceTempMessage(tempSid, failedMsg)
+      return { ok: false, error: e }
+    } finally {
+      setSending(false)
+    }
+  }
+
+  return (
+    <div className="mt-2 pt-2 border-t flex items-end gap-2">
+      <textarea
+        className="flex-1 p-2 rounded"
+        placeholder={selectedContact ? `Reply to ${selectedContact}` : "Select a conversation to reply"}
+        value={text}
+        onChange={e => setText(e.target.value)}
+        rows={2}
+        disabled={!selectedContact || phoneNumber === "ALL" || sending}
+        maxLength={500}
+      />
+      <button className="ml-2 px-4 py-2" onClick={handleSend} disabled={!selectedContact || phoneNumber === "ALL" || sending || text.length === 0}>
+        {sending ? <Loading3QuartersOutlined spin /> : "Send"}
+      </button>
+    </div>
+  )
+}
+
+export default ConversationComposer

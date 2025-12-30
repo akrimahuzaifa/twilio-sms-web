@@ -7,6 +7,9 @@ import { allPhones, MessageFilterEnum, Selector } from "./Selector"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
 import { getMessages } from "./getMessages"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
+import ConversationComposer from "../ConversationComposer/ConversationComposer"
+import Toast from "../Toast/Toast"
+import { MessageDirection } from "../../js/types"
 
 const LAST_SEEN_KEY = "twilio_sms_last_seen"
 
@@ -61,6 +64,14 @@ export const InboxPage = () => {
   const [authentication] = useAuthentication()
   const [replyText, setReplyText] = useState("")
   const [sendingReply, setSendingReply] = useState(false)
+  const [toasts, setToasts] = useState([])
+
+  const pushToast = message => {
+    const id = `t-${Date.now()}`
+    setToasts(ts => [...ts, { id, message }])
+  }
+
+  const removeToast = id => setToasts(ts => ts.filter(t => t.id !== id))
 
   useEffect(() => {
     const run = async () => {
@@ -116,23 +127,7 @@ export const InboxPage = () => {
   }
 
   const handleSendReply = async () => {
-    if (!selectedContact) return
-    if (phoneNumber === allPhones) return
-    if (sendingReply) return
-    if (!replyText || replyText.length === 0 || replyText.length > 500) return
-
-    setSendingReply(true)
-    try {
-      await sendTwilioMessage(authentication, selectedContact, phoneNumber, replyText)
-      setReplyText("")
-      // refresh messages after sending
-      const ms = await getMessages(phoneNumber, messageFilter)
-      setMessages(ms)
-    } catch (e) {
-      setError(e)
-    } finally {
-      setSendingReply(false)
-    }
+    // deprecated in favor of ConversationComposer
   }
 
   const currentMessages = selectedContact
@@ -188,27 +183,31 @@ export const InboxPage = () => {
             <div className="flex-1 overflow-auto">
               <MessageRows loading={loadingMessages} messages={currentMessages} />
             </div>
-            <div className="mt-2 pt-2 border-t flex items-end gap-2">
-              <textarea
-                className="flex-1 p-2 rounded"
-                placeholder={selectedContact ? `Reply to ${selectedContact}` : "Select a conversation to reply"}
-                value={replyText}
-                onChange={e => setReplyText(e.target.value)}
-                rows={2}
-                disabled={!selectedContact || phoneNumber === allPhones || sendingReply}
-                maxLength={500}
-              />
-              <button
-                className="ml-2 px-4 py-2"
-                onClick={handleSendReply}
-                disabled={!selectedContact || phoneNumber === allPhones || sendingReply || replyText.length === 0}
-              >
-                {sendingReply ? "Sending..." : "Send"}
-              </button>
-            </div>
+            <ConversationComposer
+              selectedContact={selectedContact}
+              phoneNumber={phoneNumber}
+              authentication={authentication}
+              sendFunc={sendTwilioMessage}
+              onOptimisticSend={m => {
+                // append optimistic message
+                setMessages(prev => [m, ...prev])
+              }}
+              onReplaceTempMessage={(tempSid, realMsg) => {
+                setMessages(prev => {
+                  const idx = prev.findIndex(p => p.messageSid === tempSid)
+                  if (idx === -1) return prev
+                  const copy = prev.slice()
+                  copy[idx] = realMsg
+                  return copy
+                })
+                if (realMsg.status === "sent") pushToast("Message sent")
+                if (realMsg.status === "failed") pushToast("Message failed to send")
+              }}
+            />
           </div>
         </div>
       </div>
+      {toasts.length > 0 && <Toast toast={toasts[toasts.length - 1]} onClose={removeToast} />}
     </Layout>
   )
 }

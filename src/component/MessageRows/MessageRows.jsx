@@ -68,6 +68,7 @@ export const MessageRows = ({ loading = true, messages = [] }) => {
     )
 
   // Messages come in sorted newest-first; display oldest-first so newest appears at bottom
+  // messages array may contain optimistic items appended newest-first; normalize order
   const ordered = (messages || []).slice().reverse()
 
   return (
