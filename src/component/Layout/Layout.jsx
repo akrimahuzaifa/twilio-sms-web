@@ -79,11 +79,17 @@ export const Layout = ({ children }) => (
       </span>
     </div>
     <div className="grow flex justify-center">
-      <span className="block bg-gray-50 w-full max-w-screen-lg p-1 sm:p-4">{children}</span>
+      <span className="block bg-gray-50 w-full max-w-screen-lg pt-1 pb-1 px-1 sm:pt-2 sm:pb-2 sm:px-4">{children}</span>
     </div>
     <div className="bg-violet-900">
       <Footer />
     </div>
+  </div>
+)
+
+export const LayoutMinimal = ({ children }) => (
+  <div className="flex justify-center bg-gray-200 min-h-screen">
+    <span className="block bg-gray-50 w-full max-w-screen-lg pt-1 pb-1 px-1 sm:pt-2 sm:pb-2 sm:px-4">{children}</span>
   </div>
 )
 

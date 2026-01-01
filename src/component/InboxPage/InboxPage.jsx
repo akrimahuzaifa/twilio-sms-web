@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from "react"
 import { useAuthentication } from "../../context/AuthenticationProvider"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
-import { Layout } from "../Layout/Layout"
+import { LayoutMinimal } from "../Layout/Layout"
+import { InboxOutlined, SendOutlined } from "@ant-design/icons"
 import { MessageRows } from "../MessageRows/MessageRows"
+import { useNavigate } from "react-router-dom"
 import { allPhones, MessageFilterEnum, Selector } from "./Selector"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
 import { getMessages } from "./getMessages"
@@ -50,6 +52,11 @@ const buildConversations = (messages = [], lastSeen = {}) => {
 }
 
 export const InboxPage = () => {
+  const navigate = useNavigate()
+
+  const navigateToInbox = () => navigate("/inbox")
+  const navigateToSend = () => navigate("/send")
+
   const [messages, setMessages] = useState([])
   const [phoneNumbers, setPhoneNumbers] = useState([])
   const [phoneNumber, setPhoneNumber] = useState(allPhones)
@@ -135,12 +142,23 @@ export const InboxPage = () => {
     : messages
 
   return (
-    <Layout>
-      <h3>Inbox</h3>
-      <p className="my-4">Your messages are displayed on this page, with the most recent ones at the top.</p>
+    <LayoutMinimal>
       <ErrorLabel error={error} className="mb-4" />
-      <div className="flex gap-4" style={{ maxHeight: "calc(100vh - 12rem)", overflow: "hidden" }}>
-        <div className="w-80 border-2 rounded-md p-2 flex flex-col">
+      <div className="flex gap-4" style={{ height: "97vh", overflow: "hidden" }}>
+        <div className="w-80 border-2 rounded-md p-2 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <div className="flex items-center gap-2">
+                <div className="font-semibold text-2xl">Twilio SMS Web</div>
+              </div>
+              <div className="flex items-center gap-3 text-gray-600">
+                <span onClick={navigateToInbox} className="cursor-pointer">
+                  <InboxOutlined className="text-xl" />
+                </span>
+                <span onClick={navigateToSend} className="cursor-pointer">
+                  <SendOutlined className="text-xl" />
+                </span>
+              </div>
+          </div>
           <Selector
             phoneNumbers={phoneNumbers}
             phoneNumber={phoneNumber}
@@ -173,6 +191,13 @@ export const InboxPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="pt-2 text-xs text-gray-600">
+            <div className="border-t mt-2 pt-2 text-center">
+              <a href={import.meta.env.VITE_GITHUB_URL || '#'} className="underline">GitHub</a>
+              <div>Developed by AHK</div>
+            </div>
           </div>
         </div>
         <div className="flex-1 border-2 rounded-md p-2 flex flex-col">
@@ -208,6 +233,6 @@ export const InboxPage = () => {
         </div>
       </div>
       {toasts.length > 0 && <Toast toast={toasts[toasts.length - 1]} onClose={removeToast} />}
-    </Layout>
+    </LayoutMinimal>
   )
 }
