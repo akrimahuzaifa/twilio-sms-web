@@ -3,10 +3,12 @@ import { useAuthentication } from "../../context/AuthenticationProvider"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
 import { LayoutMinimal } from "../Layout/Layout"
 import { siteConfig } from "../../js/siteConfig"
-import { InboxOutlined, SendOutlined } from "@ant-design/icons"
+import { InboxOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons"
 import { MessageRows } from "../MessageRows/MessageRows"
 import { useNavigate } from "react-router-dom"
 import { allPhones, MessageFilterEnum, Selector } from "./Selector"
+import { PhoneCombobox } from "../PhoneCombobox/PhoneComboox"
+import { phonePattern } from "../../js/util"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
 import { getMessages } from "./getMessages"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
@@ -56,7 +58,12 @@ export const InboxPage = () => {
   const navigate = useNavigate()
 
   const navigateToInbox = () => navigate("/inbox")
-  const navigateToSend = () => navigate("/send")
+  const navigateToSend = () => {} // Prevent navigation, will use panel instead
+  const [showSendPanel, setShowSendPanel] = useState(false)
+  const [sendFrom, setSendFrom] = useState("")
+  const [sendTo, setSendTo] = useState("")
+  const [sendMessage, setSendMessage] = useState(import.meta.env.VITE_SMS_SIGNATURE ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}` : "\n\nReply HELP for help. Reply STOP to unsubscribe.")
+  const [sendingMessage, setSendingMessage] = useState(false)
 
   const [messages, setMessages] = useState([])
   const [phoneNumbers, setPhoneNumbers] = useState([])
@@ -103,6 +110,11 @@ export const InboxPage = () => {
       .finally(() => setLoadingPhones(false))
   }, [])
 
+  useEffect(() => {
+    // default sendFrom to first phone number when available
+    if (!sendFrom && phoneNumbers && phoneNumbers.length > 0) setSendFrom(phoneNumbers[0])
+  }, [phoneNumbers])
+
   // polling for new messages
   useEffect(() => {
     let interval = undefined
@@ -145,8 +157,8 @@ export const InboxPage = () => {
   return (
     <LayoutMinimal>
       <ErrorLabel error={error} className="mb-4" />
-      <div className="flex gap-4" style={{ height: "97vh", overflow: "hidden" }}>
-        <div className="w-[30%] border-2 rounded-md p-2 flex flex-col h-full">
+      <div className="flex gap-4 relative" style={{ height: "97vh", overflow: "hidden" }}>
+        <div className="w-[30%] border-2 rounded-md p-2 flex flex-col h-full relative">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2">
                 <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
@@ -155,7 +167,7 @@ export const InboxPage = () => {
                 <span onClick={navigateToInbox} className="cursor-pointer">
                   <InboxOutlined className="text-xl" />
                 </span>
-                <span onClick={navigateToSend} className="cursor-pointer">
+                  <span onClick={() => setShowSendPanel(true)} className="cursor-pointer">
                   <SendOutlined className="text-xl" />
                 </span>
               </div>
@@ -205,6 +217,74 @@ export const InboxPage = () => {
               </div>
             </div>
           </div>
+
+          {/* Slide-in Send Panel (inside left column) */}
+          <div
+            className={`absolute inset-0 z-40 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+              showSendPanel ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="flex items-center justify-between p-2 border-b">
+              <div className="font-semibold">New message</div>
+              <button className="p-1" onClick={() => setShowSendPanel(false)} aria-label="Close">
+                <CloseOutlined />
+              </button>
+            </div>
+            <div className="p-4 overflow-auto h-full">
+              <div className="mb-3 flex items-center">
+                <label className="w-14">From:</label>
+                <PhoneCombobox initial={sendFrom} options={phoneNumbers} onSelect={setSendFrom} loading={loadingPhones} disabled={sendingMessage} />
+              </div>
+              <div className="mb-3 flex items-center">
+                <label className="w-14">To:</label>
+                <input
+                  type="tel"
+                  value={sendTo}
+                  pattern={phonePattern}
+                  onChange={e => setSendTo("+" + e.target.value.replace(/\D/g, ""))}
+                  disabled={sendingMessage}
+                />
+              </div>
+              <textarea
+                className="w-full mt-2 p-2 min-h-[120px]"
+                placeholder={`Send a message from ${sendFrom || "?"} to ${sendTo || "?"}`}
+                value={sendMessage}
+                onChange={e => setSendMessage(e.target.value)}
+                disabled={sendingMessage}
+                rows={6}
+              />
+              <div className="mt-3 flex justify-end">
+                <button
+                  className="px-4 py-2 bg-primary text-white rounded"
+                  onClick={async () => {
+                    if (sendingMessage) return
+                    const isValidFrom = phoneNumbers.includes(sendFrom)
+                    const isValidTo = sendTo && sendTo.match(phonePattern)
+                    const userPortion = sendMessage ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0].trim() : ""
+                    const isValidMessage = userPortion.length > 0 && sendMessage.length < 500
+                    if (!isValidFrom || !isValidTo || !isValidMessage) {
+                      pushToast("Invalid send details")
+                      return
+                    }
+                    setSendingMessage(true)
+                    try {
+                      await sendTwilioMessage(authentication, sendTo, sendFrom, sendMessage)
+                      pushToast("Message sent")
+                      setShowSendPanel(false)
+                      setSendTo("")
+                      setSendMessage(import.meta.env.VITE_SMS_SIGNATURE ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}` : "\n\nReply HELP for help. Reply STOP to unsubscribe.")
+                    } catch (e) {
+                      pushToast("Message failed to send")
+                    } finally {
+                      setSendingMessage(false)
+                    }
+                  }}
+                >
+                  {sendingMessage ? "Sending..." : "Send"}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="flex-1 border-2 rounded-md p-2 flex flex-col">
           <div className="mb-4">
@@ -239,6 +319,8 @@ export const InboxPage = () => {
         </div>
       </div>
       {toasts.length > 0 && <Toast toast={toasts[toasts.length - 1]} onClose={removeToast} />}
+
+      
     </LayoutMinimal>
   )
 }
