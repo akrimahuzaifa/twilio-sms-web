@@ -3,7 +3,7 @@ import { useAuthentication } from "../../context/AuthenticationProvider"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
 import { LayoutMinimal } from "../Layout/Layout"
 import { siteConfig } from "../../js/siteConfig"
-import { InboxOutlined, SendOutlined, CloseOutlined } from "@ant-design/icons"
+import { InboxOutlined, SendOutlined, LeftOutlined } from "@ant-design/icons"
 import { MessageRows } from "../MessageRows/MessageRows"
 import { useNavigate } from "react-router-dom"
 import { allPhones, MessageFilterEnum, Selector } from "./Selector"
@@ -154,6 +154,15 @@ export const InboxPage = () => {
     ? messages.filter(m => otherFromMessage(m) === selectedContact)
     : messages
 
+  // validation for slide-in send panel
+  const _userPortion = sendMessage
+    ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0].trim()
+    : ""
+  const isValidFromPanel = phoneNumbers && phoneNumbers.length > 0 && phoneNumbers.includes(sendFrom)
+  const isValidToPanel = sendTo && sendTo.match(phonePattern)
+  const isValidMessagePanel = _userPortion.length > 0 && sendMessage.length < 500
+  const canSend = isValidFromPanel && isValidToPanel && isValidMessagePanel
+
   return (
     <LayoutMinimal>
       <ErrorLabel error={error} className="mb-4" />
@@ -164,12 +173,12 @@ export const InboxPage = () => {
                 <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
-                <span onClick={navigateToInbox} className="cursor-pointer">
+                {/* <span onClick={navigateToInbox} className="cursor-pointer">
                   <InboxOutlined className="text-xl" />
-                </span>
-                  <span onClick={() => setShowSendPanel(true)} className="cursor-pointer">
-                  <SendOutlined className="text-xl" />
-                </span>
+                </span> */}
+                  <button onClick={() => setShowSendPanel(true)} className="bg-transparent border-none text-black hover:text-white cursor-pointer items-center flex gap-1">
+                  ➕ <SendOutlined className="text-xl" />
+                </button>
               </div>
           </div>
           <Selector
@@ -225,10 +234,12 @@ export const InboxPage = () => {
             }`}
           >
             <div className="flex items-center justify-between p-2 border-b">
-              <div className="font-semibold">New message</div>
-              <button className="p-1" onClick={() => setShowSendPanel(false)} aria-label="Close">
-                <CloseOutlined />
-              </button>
+              <div className="flex items-center gap-2">
+                <button className="bg-transparent py-2 rounded-[27px] text-gray-600 border-none hover:text-white" onClick={() => setShowSendPanel(false)} aria-label="Back">
+                  ↩ <InboxOutlined className="text-xl" />
+                </button>
+                <div className="font-semibold">New message</div>
+              </div>
             </div>
             <div className="p-4 overflow-auto h-full">
               <div className="mb-3 flex items-center">
@@ -255,9 +266,11 @@ export const InboxPage = () => {
               />
               <div className="mt-3 flex justify-end">
                 <button
-                  className="px-4 py-2 bg-primary text-white rounded"
+                  disabled={sendingMessage || !canSend}
+                  className={`px-4 py-2 rounded ${sendingMessage || !canSend ? "bg-gray-300 text-gray-600 cursor-not-allowed" : "bg-accent text-white"}`}
                   onClick={async () => {
-                    if (sendingMessage) return
+                    if (sendingMessage || !canSend) return
+                    // keep the existing validation as a safeguard
                     const isValidFrom = phoneNumbers.includes(sendFrom)
                     const isValidTo = sendTo && sendTo.match(phonePattern)
                     const userPortion = sendMessage ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0].trim() : ""

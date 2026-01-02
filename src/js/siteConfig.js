@@ -1,7 +1,7 @@
 export const siteConfig = {
-  appTitle: "XText",
+  appTitle: "XMessage",
   footer: {
-    creditText: "XText | Enterprise Messaging by",
+    creditText: "XMessage | Enterprise Messaging by",
     companyName: "Alpha Xolution",
     companyUrl: "https://alphaxolution.com",
   },

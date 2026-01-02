@@ -10,10 +10,10 @@
   --color-accent-border: #4c1d95; /* primary button border */
   --color-accent-hover: #031F4B;
   --color-accent-active: #4c1d95;
-  --color-composer-send: #21c063;
   --bubble-outbound: #86c7f9;
   --bubble-inbound: #e9e9eb;
   --color-primary-hover: #6aaeea;
+  --color-disable: #b5bad1;
 }
 
 /* Utility classes using theme variables */
@@ -168,18 +168,20 @@ a:hover {
   color: #2d3748;
 }
 
-/* Composer send button styles */
-.composer-send {
-  background-color: var(--color-composer-send);
-  color: #ffffff;
+/* Composer send button styles - make selector specific to override global button rules */
+button.composer-send {
+  background-color: var(--color-accent);
+  color: white;
   border: none !important;
-  box-shadow: none;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
-.composer-send:hover:not(:disabled) {
-  background-color: #37c572;
-  color:#144d37;
+button.composer-send:hover:not(:disabled) {
+  color: var(--color-primary-text);
 }
-.composer-send:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+button.composer-send:disabled {
+  background-color: var(--color-disable);
+  color: white;
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
 }
