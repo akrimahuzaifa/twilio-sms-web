@@ -16,7 +16,7 @@ const messageBody = message => (isEmpty(message.body) && message.hasMedia ? "Mes
 const MessageBubble = ({ message, onClick }) => {
   const isReceived = MessageDirection.received === message.direction
   const bubbleClass = isReceived
-    ? "bg-white text-gray-800 self-start rounded-tr-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
+    ? "bubble-inbound text-gray-800 self-start rounded-tr-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
     : "bubble-outbound self-end rounded-tl-xl rounded-bl-xl rounded-br-xl p-3 max-w-[70%] shadow"
 
   return (

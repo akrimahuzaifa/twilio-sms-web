@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useAuthentication } from "../../context/AuthenticationProvider"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
 import { LayoutMinimal } from "../Layout/Layout"
+import { siteConfig } from "../../js/siteConfig"
 import { InboxOutlined, SendOutlined } from "@ant-design/icons"
 import { MessageRows } from "../MessageRows/MessageRows"
 import { useNavigate } from "react-router-dom"
@@ -148,7 +149,7 @@ export const InboxPage = () => {
         <div className="w-80 border-2 rounded-md p-2 flex flex-col h-full">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2">
-                <div className="font-semibold text-2xl">Twilio SMS Web</div>
+                <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
               </div>
               <div className="flex items-center gap-3 text-gray-600">
                 <span onClick={navigateToInbox} className="cursor-pointer">
@@ -195,8 +196,13 @@ export const InboxPage = () => {
 
           <div className="pt-2 text-xs text-gray-600">
             <div className="border-t mt-2 pt-2 text-center">
-              <a href={import.meta.env.VITE_GITHUB_URL || '#'} className="underline">GitHub</a>
-              <div>Developed by AHK</div>
+              <div>
+                {siteConfig.footer.creditText}
+                <br />
+                <a href={siteConfig.footer.companyUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                  {siteConfig.footer.companyName}
+                </a>
+              </div>
             </div>
           </div>
         </div>

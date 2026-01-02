@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme variables - change palette here to affect the whole app */
+:root {
+  --color-primary: #86c7f9; /* header/footer background */
+  --color-primary-text: #031F4B; /* header/footer text */
+  --color-accent: #0781fe; /* primary buttons */
+  --color-accent-border: #4c1d95; /* primary button border */
+  --color-accent-hover: #031F4B;
+  --color-accent-active: #4c1d95;
+  --color-composer-send: #21c063;
+  --bubble-outbound: #86c7f9;
+  --bubble-inbound: #e9e9eb;
+  --color-primary-hover: #6aaeea;
+}
+
+/* Utility classes using theme variables */
+.bg-primary { background-color: var(--color-primary); }
+.text-primary { color: var(--color-primary-text); }
+.bg-accent { background-color: var(--color-accent); }
+.border-accent { border-color: var(--color-accent-border); }
+.hover-bg-primary:hover { background-color: var(--color-primary-hover); }
+
+
 html {
   height: 100%;
 }
@@ -30,19 +52,19 @@ code {
 }
 
 button {
-  background-color: #6d28d9;
-  border: #4c1d95 solid 2px;
+  background-color: var(--color-accent);
+  border: var(--color-accent-border) solid 2px;
   border-radius: 6px;
   padding: 8px 16px 8px 16px;
   color: white;
 }
 
 button:hover {
-  background-color: #8b5cf6;
+  background-color: var(--color-accent-hover);
 }
 
 button:active {
-  background-color: #4c1d95;
+  background-color: var(--color-accent-active);
 }
 
 button:invalid {
@@ -132,17 +154,23 @@ a:hover {
 
 /* Chat global styles (ensure these are loaded via index.css) */
 .timestamp {
-  color: #8ab8af;
+  color: #8e8e8f;
 }
 
 .bubble-outbound {
-  background-color: #144d37;
-  color: #fff;
+  background-color: var(--bubble-outbound);
+  color: #2d3748;
+}
+
+/* Inbound message bubble - light gray to match outbound style */
+.bubble-inbound {
+  background-color: var(--bubble-inbound);
+  color: #2d3748;
 }
 
 /* Composer send button styles */
 .composer-send {
-  background-color: #21c063;
+  background-color: var(--color-composer-send);
   color: #ffffff;
   border: none !important;
   box-shadow: none;
