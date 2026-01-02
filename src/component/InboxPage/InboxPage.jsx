@@ -146,7 +146,7 @@ export const InboxPage = () => {
     <LayoutMinimal>
       <ErrorLabel error={error} className="mb-4" />
       <div className="flex gap-4" style={{ height: "97vh", overflow: "hidden" }}>
-        <div className="w-80 border-2 rounded-md p-2 flex flex-col h-full">
+        <div className="w-[30%] border-2 rounded-md p-2 flex flex-col h-full">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2">
                 <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
@@ -176,18 +176,18 @@ export const InboxPage = () => {
               <div
                 key={c.contact}
                 onClick={() => handleSelect(c.contact)}
-                className={`p-2 mb-2 rounded hover:bg-gray-100 cursor-pointer flex justify-between items-start ${
+                className={`p-2 mb-2 rounded hover:bg-gray-100 cursor-pointer flex justify-between items-center min-h-[75px] ${
                   selectedContact === c.contact ? "bg-purple-100" : "bg-white"
                 }`}
               >
-                <div>
-                  <div className="font-semibold truncate w-48">{c.contact}</div>
-                  <div className="text-xs text-gray-600 line-clamp-2 w-48">{c.lastMessage.body}</div>
+                <div className="flex-1 min-w-0 pr-2">
+                  <div className="font-semibold truncate">{c.contact}</div>
+                  <div className="text-xs text-gray-600 line-clamp-2 truncate">{c.lastMessage.body}</div>
                 </div>
-                <div className="text-right">
+                <div className="w-20 flex flex-col items-end text-right">
                   <div className="text-xs timestamp">{new Date(c.lastMessage.date).toLocaleString()}</div>
                   {c.unread > 0 && (
-                    <div className="mt-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">{c.unread}</div>
+                    <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">{c.unread}</div>
                   )}
                 </div>
               </div>
