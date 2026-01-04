@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>αMessage | API Login</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  </head>
+  <body>
+    <div class="auth-container">
+      <div class="login-card">
+        <div class="login-header">
+          <a href="#" class="back-link"><i class="ph ph-arrow-left"></i> Back</a>
+          <h2>Authentication with API Key</h2>
+          <p>Manage your Twilio resources securely with API credentials.</p>
+        </div>
+
+        <form class="login-form">
+          <div class="input-group">
+            <label for="account-sid">Account SID</label>
+            <input type="text" id="account-sid" placeholder="ACd9a982c0e94f..." required />
+          </div>
+
+          <div class="input-group">
+            <label for="api-key">API Key</label>
+            <input type="text" id="api-key" placeholder="SK29f9a7b5db42b..." required />
+          </div>
+
+          <div class="input-group">
+            <label for="api-secret">API Secret</label>
+            <div class="password-wrapper">
+              <input type="password" id="api-secret" placeholder="••••••••••••••••" required />
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-ghost">Cancel</button>
+            <button type="submit" class="btn-primary sign-in-btn">Sign-in <i class="ph ph-caret-right"></i></button>
+          </div>
+        </form>
+
+        <div class="doc-hint">
+          <p>Need help? <a href="#">See Twilio API Key Documentation</a></p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
