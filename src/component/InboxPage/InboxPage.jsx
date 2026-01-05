@@ -15,6 +15,7 @@ import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
 import ConversationComposer from "../ConversationComposer/ConversationComposer"
 import Toast from "../Toast/Toast"
 import { MessageDirection } from "../../js/types"
+import notif from "../../assets/notification.mp3"
 
 const LAST_SEEN_KEY = "twilio_sms_last_seen"
 
@@ -62,7 +63,11 @@ export const InboxPage = () => {
   const [showSendPanel, setShowSendPanel] = useState(false)
   const [sendFrom, setSendFrom] = useState("")
   const [sendTo, setSendTo] = useState("")
-  const [sendMessage, setSendMessage] = useState(import.meta.env.VITE_SMS_SIGNATURE ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}` : "\n\nReply HELP for help. Reply STOP to unsubscribe.")
+  const [sendMessage, setSendMessage] = useState(
+    import.meta.env.VITE_SMS_SIGNATURE
+      ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}`
+      : "\n\nReply HELP for help. Reply STOP to unsubscribe.",
+  )
   const [sendingMessage, setSendingMessage] = useState(false)
 
   const [messages, setMessages] = useState([])
@@ -76,6 +81,7 @@ export const InboxPage = () => {
   const [selectedContact, setSelectedContact] = useState(undefined)
   const [lastSeen, setLastSeen] = useState(() => loadLastSeen())
   const pollingRef = useRef(false)
+  const prevReceivedIdsRef = useRef(new Set())
   const [authentication] = useAuthentication()
   const [replyText, setReplyText] = useState("")
   const [sendingReply, setSendingReply] = useState(false)
@@ -89,11 +95,62 @@ export const InboxPage = () => {
   const removeToast = id => setToasts(ts => ts.filter(t => t.id !== id))
 
   useEffect(() => {
+    // request notification permission once on mount
+    try {
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission().catch(() => {})
+      }
+    } catch (e) {}
+
+    // helper to play a short in-browser tone using WebAudio
+    try {
+      // const playNotificationSound = () => {
+      //   try {
+      //     const AudioCtx = window.AudioContext || window.webkitAudioContext
+      //     if (!AudioCtx) return
+      //     const ctx = new AudioCtx()
+      //     const o = ctx.createOscillator()
+      //     const g = ctx.createGain()
+      //     o.type = "sine" // sine | square | triangle | sawtooth
+      //     o.frequency.value = 1000
+      //     g.gain.value = 0.04
+      //     o.connect(g)
+      //     g.connect(ctx.destination)
+      //     o.start()
+      //     setTimeout(() => {
+      //       o.stop()
+      //       try {
+      //         ctx.close()
+      //       } catch (e) {}
+      //     }, 180)
+      //   } catch (e) {}
+      // }
+
+      const playNotificationSound = () => {
+        try {
+          const audio = new Audio(notif)
+          audio.volume = 0.7
+          audio.play().catch(() => {})
+        } catch (e) {}
+      }
+      // expose for debugging or manual trigger
+      try {
+        window.__playTwilioSmsSound = playNotificationSound
+      } catch (e) {}
+    } catch (e) {}
+  }, [])
+  useEffect(() => {
     const run = async () => {
       setLoadingMessages(true)
       try {
         const ms = await getMessages(phoneNumber, messageFilter)
         setMessages(ms)
+        // initialize previously seen received ids so initial fetch does not trigger notifications
+        try {
+          prevReceivedIdsRef.current = new Set(
+            (ms || []).filter(m => m.direction === "received").map(m => m.messageSid),
+          )
+        } catch (e) {}
       } catch (e) {
         setError(e)
       } finally {
@@ -125,6 +182,38 @@ export const InboxPage = () => {
         pollingRef.current = true
         try {
           const ms = await getMessages(phoneNumber, messageFilter)
+          // detect new inbound messages
+          try {
+            const prevIds = prevReceivedIdsRef.current || new Set()
+            const received = (ms || []).filter(m => m.direction === "received")
+            const newMessages = received.filter(m => !prevIds.has(m.messageSid))
+            if (newMessages && newMessages.length > 0) {
+              newMessages.forEach(m => prevIds.add(m.messageSid))
+              prevReceivedIdsRef.current = prevIds
+              newMessages.forEach(m => {
+                try {
+                  if (
+                    typeof window !== "undefined" &&
+                    "Notification" in window &&
+                    Notification.permission === "granted"
+                  ) {
+                    const title = `${siteConfig.appTitle} — New message`
+                    const body = `${m.from}: ${m.body ? (m.body.length > 120 ? m.body.substring(0, 120) + "..." : m.body) : "(media)"}`
+                    const n = new Notification(title, { body })
+                    n.onclick = () => {
+                      try {
+                        window.focus()
+                      } catch (e) {}
+                    }
+                  }
+                } catch (e) {}
+                try {
+                  if (typeof window !== "undefined" && window.__playTwilioSmsSound) window.__playTwilioSmsSound()
+                } catch (e) {}
+                pushToast(`New message from ${m.from}`)
+              })
+            }
+          } catch (e) {}
           setMessages(ms)
         } catch (e) {
           setError(e)
@@ -150,13 +239,13 @@ export const InboxPage = () => {
     // deprecated in favor of ConversationComposer
   }
 
-  const currentMessages = selectedContact
-    ? messages.filter(m => otherFromMessage(m) === selectedContact)
-    : messages
+  const currentMessages = selectedContact ? messages.filter(m => otherFromMessage(m) === selectedContact) : messages
 
   // validation for slide-in send panel
   const _userPortion = sendMessage
-    ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0].trim()
+    ? sendMessage
+        .split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0]
+        .trim()
     : ""
   const isValidFromPanel = phoneNumbers && phoneNumbers.length > 0 && phoneNumbers.includes(sendFrom)
   const isValidToPanel = sendTo && sendTo.match(phonePattern)
@@ -170,16 +259,19 @@ export const InboxPage = () => {
         <div className="w-[30%] border-2 rounded-md p-2 flex flex-col h-full relative">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2">
-                <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
-              </div>
-              <div className="flex items-center gap-3 text-gray-600">
-                {/* <span onClick={navigateToInbox} className="cursor-pointer">
+              <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
+            </div>
+            <div className="flex items-center gap-3 text-gray-600">
+              {/* <span onClick={navigateToInbox} className="cursor-pointer">
                   <InboxOutlined className="text-xl" />
                 </span> */}
-                  <button onClick={() => setShowSendPanel(true)} className="bg-transparent border-none text-black hover:text-white cursor-pointer items-center flex gap-1">
-                  ➕ <SendOutlined className="text-xl" />
-                </button>
-              </div>
+              <button
+                onClick={() => setShowSendPanel(true)}
+                className="bg-transparent border-none text-black hover:text-white cursor-pointer items-center flex gap-1"
+              >
+                ➕ <SendOutlined className="text-xl" />
+              </button>
+            </div>
           </div>
           <Selector
             phoneNumbers={phoneNumbers}
@@ -208,7 +300,9 @@ export const InboxPage = () => {
                 <div className="w-20 flex flex-col items-end text-right">
                   <div className="text-xs timestamp">{new Date(c.lastMessage.date).toLocaleString()}</div>
                   {c.unread > 0 && (
-                    <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">{c.unread}</div>
+                    <div className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs">
+                      {c.unread}
+                    </div>
                   )}
                 </div>
               </div>
@@ -235,7 +329,11 @@ export const InboxPage = () => {
           >
             <div className="flex items-center justify-between p-2 border-b">
               <div className="flex items-center gap-2">
-                <button className="bg-transparent py-2 rounded-[27px] text-gray-600 border-none hover:text-white" onClick={() => setShowSendPanel(false)} aria-label="Back">
+                <button
+                  className="bg-transparent py-2 rounded-[27px] text-gray-600 border-none hover:text-white"
+                  onClick={() => setShowSendPanel(false)}
+                  aria-label="Back"
+                >
                   ↩ <InboxOutlined className="text-xl" />
                 </button>
                 <div className="font-semibold">New message</div>
@@ -244,7 +342,13 @@ export const InboxPage = () => {
             <div className="p-4 overflow-auto h-full">
               <div className="mb-3 flex items-center">
                 <label className="w-14">From:</label>
-                <PhoneCombobox initial={sendFrom} options={phoneNumbers} onSelect={setSendFrom} loading={loadingPhones} disabled={sendingMessage} />
+                <PhoneCombobox
+                  initial={sendFrom}
+                  options={phoneNumbers}
+                  onSelect={setSendFrom}
+                  loading={loadingPhones}
+                  disabled={sendingMessage}
+                />
               </div>
               <div className="mb-3 flex items-center">
                 <label className="w-14">To:</label>
@@ -273,7 +377,13 @@ export const InboxPage = () => {
                     // keep the existing validation as a safeguard
                     const isValidFrom = phoneNumbers.includes(sendFrom)
                     const isValidTo = sendTo && sendTo.match(phonePattern)
-                    const userPortion = sendMessage ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0].trim() : ""
+                    const userPortion = sendMessage
+                      ? sendMessage
+                          .split(
+                            import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.",
+                          )[0]
+                          .trim()
+                      : ""
                     const isValidMessage = userPortion.length > 0 && sendMessage.length < 500
                     if (!isValidFrom || !isValidTo || !isValidMessage) {
                       pushToast("Invalid send details")
@@ -285,7 +395,11 @@ export const InboxPage = () => {
                       pushToast("Message sent")
                       setShowSendPanel(false)
                       setSendTo("")
-                      setSendMessage(import.meta.env.VITE_SMS_SIGNATURE ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}` : "\n\nReply HELP for help. Reply STOP to unsubscribe.")
+                      setSendMessage(
+                        import.meta.env.VITE_SMS_SIGNATURE
+                          ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}`
+                          : "\n\nReply HELP for help. Reply STOP to unsubscribe.",
+                      )
                     } catch (e) {
                       pushToast("Message failed to send")
                     } finally {
@@ -332,8 +446,6 @@ export const InboxPage = () => {
         </div>
       </div>
       {toasts.length > 0 && <Toast toast={toasts[toasts.length - 1]} onClose={removeToast} />}
-
-      
     </LayoutMinimal>
   )
 }
