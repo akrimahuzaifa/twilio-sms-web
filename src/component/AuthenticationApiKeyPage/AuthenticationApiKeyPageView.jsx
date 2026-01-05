@@ -43,7 +43,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="AccountSid"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] focus:border-[var(--color-primary)] placeholder:text-gray-400"
             type="text"
             name="AccountSid"
             value={accountSid}
@@ -61,7 +61,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="ApiKey"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] focus:border-[var(--color-primary)] placeholder:text-gray-400"
             type="text"
             name="ApiKey"
             value={apiKey}
@@ -79,7 +79,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="ApiSecret"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] focus:border-[var(--color-primary)] placeholder:text-gray-400"
             type="password"
             name="ApiSecret"
             value={apiSecret}
@@ -101,15 +101,26 @@ export const AuthenticationApiKeyView = ({
         </div>
       </form>
 
-      <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
+      {/* <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
         Need help?{" "}
         <a
           href="https://www.twilio.com/docs/iam/api-keys"
           target="_blank"
           rel="noreferrer"
-          className="text-[var(--color-primary)] underline"
+          className="text-[var(--color-primary)] font-semibold hover:underline"
         >
           See Twilio API Key Documentation
+        </a>
+      </div> */}
+      <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
+        Need help?{" "}
+        <a
+          href="https://github.com/akrimahuzaifa"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[var(--color-primary)] font-semibold hover:underline"
+        >
+          Contact Developer
         </a>
       </div>
     </div>

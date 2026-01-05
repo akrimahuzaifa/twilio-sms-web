@@ -17,7 +17,7 @@ export const AuthenticationMethodCard = ({ onChange = emptyFn }) => (
 
     <div className="relative w-full max-w-[800px] text-center p-8 mx-auto">
       <header className="mb-12">
-        <h1 className="text-[40px] font-extrabold text-[#3b82f6] mb-2" style={{ letterSpacing: '-1px' }}>
+        <h1 className="text-[40px] font-extrabold text-[#3b82f6] mb-2" style={{ letterSpacing: "-1px" }}>
           {siteConfig.appTitle}
         </h1>
         <p className="text-gray-500 text-base">Select your preferred authentication method to continue</p>
@@ -54,10 +54,12 @@ export const AuthenticationMethodCard = ({ onChange = emptyFn }) => (
       </div>
 
       <footer className="text-sm text-gray-500">
-        <a href={termsAndConditionsUrl} className="block mb-2 text-[bg-accent] hover:underline">Terms and Conditions</a>
+        {/* <a href={termsAndConditionsUrl} className="block mb-2 text-[bg-accent] hover:underline">Terms and Conditions</a> */}
         <p>
-          © {new Date().getFullYear()} {siteConfig.footer.creditText} {" "} <br/>
-          <a href={siteConfig.footer.companyUrl} className="text-gray-400 italic" target="_blank">{siteConfig.footer.companyName}</a>
+          © {new Date().getFullYear()} {siteConfig.footer.creditText} <br />
+          <a href={siteConfig.footer.companyUrl} className="hover:underline" target="_blank">
+            {siteConfig.footer.companyName}
+          </a>
         </p>
       </footer>
     </div>

@@ -259,7 +259,7 @@ export const InboxPage = () => {
         <div className="w-[30%] border-2 rounded-md p-2 flex flex-col h-full relative">
           <div className="flex items-center justify-between mb-2 px-1">
             <div className="flex items-center gap-2">
-              <div className="font-semibold text-2xl">{siteConfig.appTitle}</div>
+              <div className="font-semibold text-2xl text-[#3b82f6]">{siteConfig.appTitle}</div>
             </div>
             <div className="flex items-center gap-3 text-gray-600">
               {/* <span onClick={navigateToInbox} className="cursor-pointer">
@@ -314,7 +314,12 @@ export const InboxPage = () => {
               <div>
                 {siteConfig.footer.creditText}
                 <br />
-                <a href={siteConfig.footer.companyUrl} target="_blank" rel="noopener noreferrer" className="underline">
+                <a
+                  href={siteConfig.footer.companyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:underline"
+                >
                   {siteConfig.footer.companyName}
                 </a>
               </div>

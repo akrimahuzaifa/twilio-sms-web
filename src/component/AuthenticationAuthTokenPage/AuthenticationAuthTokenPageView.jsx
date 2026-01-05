@@ -43,7 +43,7 @@ export const AuthenticationAuthTokenView = ({
           </label>
           <input
             id="AccountSid"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] focus:border-[var(--color-primary)] placeholder:text-gray-400"
             type="text"
             name="AccountSid"
             value={accountSid}
@@ -61,7 +61,7 @@ export const AuthenticationAuthTokenView = ({
           </label>
           <input
             id="AuthToken"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] focus:border-[var(--color-primary)] placeholder:text-gray-400"
             type="password"
             name="AuthToken"
             value={authToken}
@@ -83,15 +83,26 @@ export const AuthenticationAuthTokenView = ({
         </div>
       </form>
 
-      <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
+      {/* <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
         Need help?{" "}
         <a
           href="https://help.twilio.com/articles/223136027-Auth-Tokens-and-How-to-Change-Them"
           target="_blank"
           rel="noreferrer"
-          className="text-[var(--color-primary)] underline"
+          className="text-[var(--color-primary)] hover:underline"
         >
           See Twilio Auth Token
+        </a>
+      </div> */}
+      <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
+        Need help?{" "}
+        <a
+          href="https://github.com/akrimahuzaifa"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[var(--color-primary)] font-semibold hover:underline"
+        >
+          Contact Developer
         </a>
       </div>
     </div>
