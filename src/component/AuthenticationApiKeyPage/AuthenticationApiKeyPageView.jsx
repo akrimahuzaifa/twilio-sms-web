@@ -27,7 +27,7 @@ export const AuthenticationApiKeyView = ({
           <i className="ph ph-arrow-left" />
           Back
         </a>
-        <h2 className="text-2xl font-semibold mb-1">Authentication with API Key</h2>
+        <h2 className="text-2xl font-extrabold mb-1 text-[var(--text-main)]">Authentication with API Key</h2>
         <p className="text-sm text-[var(--text-muted)]">Manage your Twilio resources securely with API credentials.</p>
       </div>
 
@@ -43,7 +43,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="AccountSid"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
             type="text"
             name="AccountSid"
             value={accountSid}
@@ -61,7 +61,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="ApiKey"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
             type="text"
             name="ApiKey"
             value={apiKey}
@@ -79,7 +79,7 @@ export const AuthenticationApiKeyView = ({
           </label>
           <input
             id="ApiSecret"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
             type="password"
             name="ApiSecret"
             value={apiSecret}

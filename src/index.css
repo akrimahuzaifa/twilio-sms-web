@@ -15,6 +15,9 @@
   --bubble-inbound: #e9e9eb;
   --color-primary-hover: #2563eb;
   --color-disable: #b5bad1;
+  --text-main: #1f2937; /* default body color (slightly softer than pure black) */
+  --text-muted: #64748b; /* secondary text */
+  --bg-page: #f8fafc; /* page background */
 }
 
 /* Utility classes using theme variables */
@@ -115,13 +118,14 @@ button:disabled {
   background-color: var(--color-primary);
   color: white;
   border: none;
-  padding: 0.5rem 1.25rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 6px 12px -6px rgba(59, 130, 246, 0.45);
 }
 .btn-primary:hover:not(:disabled) {
   background-color: var(--color-accent-hover);
@@ -146,6 +150,11 @@ input {
   border-radius: 0.25rem;
   border-width: 2px;
   background-color: white;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9ca3af; /* softer placeholder */
 }
 
 select:disabled,

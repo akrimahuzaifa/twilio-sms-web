@@ -25,7 +25,7 @@ export const AuthenticationAuthTokenView = ({
           <i className="ph ph-arrow-left" />
           Back
         </a>
-        <h2 className="text-2xl font-semibold mb-1">Authentication with Auth Token</h2>
+        <h2 className="text-2xl font-extrabold mb-1 text-[var(--text-main)]">Authentication with Auth Token</h2>
         <p className="text-sm text-[var(--text-muted)]">
           Use your Account SID and Auth Token from the Twilio Console to sign in.
         </p>
@@ -43,7 +43,7 @@ export const AuthenticationAuthTokenView = ({
           </label>
           <input
             id="AccountSid"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
             type="text"
             name="AccountSid"
             value={accountSid}
@@ -61,7 +61,7 @@ export const AuthenticationAuthTokenView = ({
           </label>
           <input
             id="AuthToken"
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe] placeholder:text-gray-400"
             type="password"
             name="AuthToken"
             value={authToken}
