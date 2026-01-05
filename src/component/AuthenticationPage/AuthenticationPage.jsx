@@ -1,7 +1,6 @@
 import { AuthenticationMethod } from "../../context/AuthenticationProvider"
 import { useNavigate } from "react-router-dom"
 import { AuthenticationMethodCard } from "../AuthenticationMethodCard/AuthenticationMethodCard"
-import { LayoutWithoutNavBar } from "../Layout/Layout"
 
 export const AuthenticationPage = () => {
   const navigate = useNavigate()
@@ -14,9 +13,5 @@ export const AuthenticationPage = () => {
     }
   }
 
-  return (
-    <LayoutWithoutNavBar>
-      <AuthenticationMethodCard onChange={handleAuthMethod} />
-    </LayoutWithoutNavBar>
-  )
+  return <AuthenticationMethodCard onChange={handleAuthMethod} />
 }
