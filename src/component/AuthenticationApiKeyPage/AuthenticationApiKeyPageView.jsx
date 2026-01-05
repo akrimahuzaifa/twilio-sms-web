@@ -38,7 +38,9 @@ export const AuthenticationApiKeyView = ({
         }}
       >
         <div className="mb-4">
-          <label htmlFor="AccountSid" className="block text-sm font-semibold text-[var(--text-main)] mb-2">Account SID</label>
+          <label htmlFor="AccountSid" className="block text-sm font-semibold text-[var(--text-main)] mb-2">
+            Account SID
+          </label>
           <input
             id="AccountSid"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
@@ -54,7 +56,9 @@ export const AuthenticationApiKeyView = ({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="ApiKey" className="block text-sm font-semibold text-[var(--text-main)] mb-2">API Key</label>
+          <label htmlFor="ApiKey" className="block text-sm font-semibold text-[var(--text-main)] mb-2">
+            API Key
+          </label>
           <input
             id="ApiKey"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
@@ -70,7 +74,9 @@ export const AuthenticationApiKeyView = ({
         </div>
 
         <div className="mb-4">
-          <label htmlFor="ApiSecret" className="block text-sm font-semibold text-[var(--text-main)] mb-2">API Secret</label>
+          <label htmlFor="ApiSecret" className="block text-sm font-semibold text-[var(--text-main)] mb-2">
+            API Secret
+          </label>
           <input
             id="ApiSecret"
             className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#fcfcfc] focus:outline-none focus:ring-4 focus:ring-[#bfdbfe]"
@@ -86,19 +92,25 @@ export const AuthenticationApiKeyView = ({
         </div>
 
         <div className="flex justify-end gap-3 mt-6">
-          <button type="button" onClick={onCancel} className={`btn-ghost rounded-xl`}>Cancel</button>
-          <button
-            className={`${loadingClassName(loading)} btn-primary rounded-xl`}
-            type="submit"
-            disabled={loading}
-          >
+          <button type="button" onClick={onCancel} className={`btn-ghost rounded-xl`}>
+            Cancel
+          </button>
+          <button className={`${loadingClassName(loading)} btn-primary rounded-xl`} type="submit" disabled={loading}>
             Sign-in <i className="ph ph-caret-right" />
           </button>
         </div>
       </form>
 
       <div className="mt-6 text-center text-sm text-[var(--text-muted)]">
-        Need help? <a href="https://www.twilio.com/docs/iam/api-keys" target="_blank" rel="noreferrer" className="text-[var(--color-primary)] underline">See Twilio API Key Documentation</a>
+        Need help?{" "}
+        <a
+          href="https://www.twilio.com/docs/iam/api-keys"
+          target="_blank"
+          rel="noreferrer"
+          className="text-[var(--color-primary)] underline"
+        >
+          See Twilio API Key Documentation
+        </a>
       </div>
     </div>
   </div>
