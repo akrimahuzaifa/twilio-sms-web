@@ -23,10 +23,17 @@ export const AuthenticationApiKeyView = ({
       }}
     />
 
-    <div className="relative w-full max-w-[560px] p-6 mx-auto">
+    <div className="relative w-full max-w-[500px] p-6 mx-auto">
       <div className="login-card mx-auto bg-white rounded-2xl shadow-lg p-8">
         <div className="login-header mb-6 text-left">
-          <a href="#" onClick={e => { e.preventDefault(); onCancel() }} className="back-link text-gray-600 hover:text-[#3b82f6] flex items-center gap-2 mb-3">
+          <a
+            href="#"
+            onClick={e => {
+              e.preventDefault()
+              onCancel()
+            }}
+            className="back-link text-gray-600 hover:text-[#3b82f6] flex items-center gap-2 mb-3"
+          >
             <i className="ph ph-arrow-left" />
             Back
           </a>
@@ -105,7 +112,17 @@ export const AuthenticationApiKeyView = ({
         </form>
 
         <div className="doc-hint mt-6 text-center">
-          <p className="text-sm text-gray-500">Need help? <a href="https://www.twilio.com/docs/iam/api-keys" target="_blank" rel="noreferrer" className="text-[#3b82f6] underline">See Twilio API Key Documentation</a></p>
+          <p className="text-sm text-gray-500">
+            Need help?{" "}
+            <a
+              href="https://www.twilio.com/docs/iam/api-keys"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#3b82f6]"
+            >
+              See Twilio API Key Documentation
+            </a>
+          </p>
         </div>
       </div>
 
