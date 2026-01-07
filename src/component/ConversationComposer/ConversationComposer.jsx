@@ -11,7 +11,14 @@ import { allPhones } from "../InboxPage/Selector"
  * - sendFunc(authentication, to, from, body) => Promise<sid>
  * - authentication
  */
-export const ConversationComposer = ({ selectedContact, phoneNumber, authentication, onOptimisticSend, onReplaceTempMessage, sendFunc }) => {
+export const ConversationComposer = ({
+  selectedContact,
+  phoneNumber,
+  authentication,
+  onOptimisticSend,
+  onReplaceTempMessage,
+  sendFunc,
+}) => {
   const [text, setText] = useState("")
   const [sending, setSending] = useState(false)
 
@@ -50,9 +57,9 @@ export const ConversationComposer = ({ selectedContact, phoneNumber, authenticat
   }
 
   return (
-    <div className="mt-2 pt-2 border-t flex items-center gap-2">
+    <div className="mt-2 pt-2 h-14 border-t flex items-stretch gap-2">
       <textarea
-        className="flex-1 p-2 rounded"
+        className="flex-1 p-2 rounded focus:outline-none focus:border-blue-400"
         placeholder={selectedContact ? `Reply to ${selectedContact}` : "Select a conversation to reply"}
         value={text}
         onChange={e => setText(e.target.value)}
@@ -61,7 +68,7 @@ export const ConversationComposer = ({ selectedContact, phoneNumber, authenticat
         maxLength={500}
       />
       <button
-        className="ml-2 w-10 h-10 flex items-center justify-center rounded-full composer-send"
+        className="ml-2 w-14 h-full flex items-center justify-center rounded-[16px] composer-send"
         onClick={handleSend}
         disabled={!selectedContact || phoneNumber === allPhones || sending || text.length === 0}
         aria-label="Send message"

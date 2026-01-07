@@ -267,7 +267,7 @@ export const InboxPage = () => {
                 </span> */}
               <button
                 onClick={() => setShowSendPanel(true)}
-                className="bg-transparent border-none text-black hover:text-white cursor-pointer items-center flex gap-1"
+                className="bg-transparent rounded-[27px] border-none text-black hover:text-white cursor-pointer items-center flex gap-1"
               >
                 + <SendOutlined className="text-xl" />
               </button>
@@ -376,7 +376,7 @@ export const InboxPage = () => {
               <div className="mt-3 flex justify-end">
                 <button
                   disabled={sendingMessage || !canSend}
-                  className={`${sendingMessage || !canSend ? "px-4 py-2 rounded bg-gray-300 text-gray-600 cursor-not-allowed" : "btn-primary"}`}
+                  className={`${sendingMessage || !canSend ? "px-4 py-2 rounded-[27px] bg-gray-300 text-gray-600 cursor-not-allowed" : "btn-primary"}`}
                   onClick={async () => {
                     if (sendingMessage || !canSend) return
                     // keep the existing validation as a safeguard
