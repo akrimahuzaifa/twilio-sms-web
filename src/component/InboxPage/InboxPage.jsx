@@ -16,6 +16,7 @@ import ConversationComposer from "../ConversationComposer/ConversationComposer"
 import Toast from "../Toast/Toast"
 import { MessageDirection } from "../../js/types"
 import notif from "../../assets/notification.mp3"
+import { FOOTER as MessageFooter } from "../../js/sendTwilioMessage"
 
 const LAST_SEEN_KEY = "twilio_sms_last_seen"
 
@@ -64,9 +65,7 @@ export const InboxPage = () => {
   const [sendFrom, setSendFrom] = useState("")
   const [sendTo, setSendTo] = useState("")
   const [sendMessage, setSendMessage] = useState(
-    import.meta.env.VITE_SMS_SIGNATURE
-      ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}`
-      : "\n\nReply HELP for help. Reply STOP to unsubscribe.",
+    import.meta.env.VITE_SMS_SIGNATURE ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}` : MessageFooter,
   )
   const [sendingMessage, setSendingMessage] = useState(false)
 
@@ -243,9 +242,7 @@ export const InboxPage = () => {
 
   // validation for slide-in send panel
   const _userPortion = sendMessage
-    ? sendMessage
-        .split(import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.")[0]
-        .trim()
+    ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || MessageFooter)[0].trim()
     : ""
   const isValidFromPanel = phoneNumbers && phoneNumbers.length > 0 && phoneNumbers.includes(sendFrom)
   const isValidToPanel = sendTo && sendTo.match(phonePattern)
@@ -383,11 +380,7 @@ export const InboxPage = () => {
                     const isValidFrom = phoneNumbers.includes(sendFrom)
                     const isValidTo = sendTo && sendTo.match(phonePattern)
                     const userPortion = sendMessage
-                      ? sendMessage
-                          .split(
-                            import.meta.env.VITE_SMS_SIGNATURE || "\n\nReply HELP for help. Reply STOP to unsubscribe.",
-                          )[0]
-                          .trim()
+                      ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || MessageFooter)[0].trim()
                       : ""
                     const isValidMessage = userPortion.length > 0 && sendMessage.length < 500
                     if (!isValidFrom || !isValidTo || !isValidMessage) {
@@ -403,7 +396,7 @@ export const InboxPage = () => {
                       setSendMessage(
                         import.meta.env.VITE_SMS_SIGNATURE
                           ? `\n\n${import.meta.env.VITE_SMS_SIGNATURE}`
-                          : "\n\nReply HELP for help. Reply STOP to unsubscribe.",
+                          : MessageFooter,
                       )
                     } catch (e) {
                       pushToast("Message failed to send")

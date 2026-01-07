@@ -8,6 +8,7 @@ import { Layout } from "../Layout/Layout"
 import { PhoneCombobox } from "../PhoneCombobox/PhoneComboox"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
 import { Loading3QuartersOutlined } from "@ant-design/icons"
+import { FOOTER as MessageFooter } from "../../js/sendTwilioMessage"
 
 export const SendPage = () => {
   const { from: fromParam, to: toParam } = useParams()
@@ -15,8 +16,8 @@ export const SendPage = () => {
   const [from, setFrom] = useState(fromParam ?? "")
   const [to, setTo] = useState(toParam ?? "")
   // Signature is prefilled with two blank lines above it so user types message in the first lines.
-  const defaultSignature = import.meta.env.VITE_SMS_SIGNATURE ?? "Reply HELP for help. Reply STOP to unsubscribe."
-  const signatureString = `\n\n${defaultSignature}`
+  const defaultSignature = import.meta.env.VITE_SMS_SIGNATURE ?? MessageFooter
+  const signatureString = `${defaultSignature}`
   const [message, setMessage] = useState(signatureString)
   const [loadingPhoneNumbers, setLoadingPhoneNumbers] = useState(true)
   const [sendingMessage, setSendingMessage] = useState(false)
