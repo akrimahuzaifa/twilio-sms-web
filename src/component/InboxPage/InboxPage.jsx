@@ -287,7 +287,7 @@ export const InboxPage = () => {
                 key={c.contact}
                 onClick={() => handleSelect(c.contact)}
                 className={`p-2 mb-2 rounded hover:bg-gray-100 cursor-pointer flex justify-between items-center min-h-[75px] ${
-                  selectedContact === c.contact ? "bg-purple-100" : "bg-white"
+                  selectedContact === c.contact ? "bg-blue-100" : "bg-white"
                 }`}
               >
                 <div className="flex-1 min-w-0 pr-2">

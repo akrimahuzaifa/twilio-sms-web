@@ -1,11 +1,12 @@
 import axios from "axios"
 import { toCredentials, Authentication } from "../context/AuthenticationProvider"
 
+export const FOOTER = "\n\nReply HELP for help. Reply STOP to unsubscribe."
+
 export const sendTwilioMessage = async (authentication = new Authentication(), to = "", from = "", body = "") => {
   const credentials = toCredentials(authentication)
 
-  const FOOTER = "\n\nReply HELP for help. Reply STOP to unsubscribe."
-  const bodyWithFooter = body && body.includes("Reply HELP for help. Reply STOP to unsubscribe.") ? body : `${body || ""}${FOOTER}`
+  const bodyWithFooter = body && body.includes(FOOTER.trim()) ? body : `${body || ""}${FOOTER}`
 
   const data = new URLSearchParams()
   data.append("To", to)
