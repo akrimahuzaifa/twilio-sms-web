@@ -90,9 +90,36 @@ VITE_AUTHENTICATION_API_KEY=SKxxxxxxxxxxxxxxxxxxxx
 VITE_AUTHENTICATION_API_SECRET=xxxxxxxxxxxxxxxxxxxx
 VITE_TERMS_AND_CONDITIONS_URL=xxxxxxxxxxxxxxxxxxxx
 VITE_GITHUB_URL=xxxxxxxxxxxxxxxxxxxx
+
+# Twilio Functions URL for MMS support (required for viewing/sending MMS media)
+VITE_TWILIO_FUNCTIONS_URL=https://your-service-name-xxxx.twil.io
 ```
 
 `.env` files should be managed independently and they should not be pushed to the codebase repository.
+
+# MMS Support
+
+This app supports viewing and sending MMS (picture messages). To enable MMS functionality, you need to set up Twilio Functions.
+
+## Why Twilio Functions?
+
+MMS media from Twilio requires authentication to access. Since this is a static frontend app (hosted on GitHub Pages), we need a serverless backend to proxy media requests. Twilio Functions provides a free, native solution.
+
+## Quick Setup
+
+1. **Create Twilio Functions Service**: See detailed instructions in `server/twilio-function/README.md`
+2. **Deploy three functions**: `media-proxy`, `get-media`, and `send-mms`
+3. **Add the Functions URL** to your `.env` file:
+   ```
+   VITE_TWILIO_FUNCTIONS_URL=https://your-service-xxxx.twil.io
+   ```
+
+## MMS Limitations
+
+- MMS only works in **US and Canada** (outbound to US/Canada numbers)
+- Your Twilio phone number must be **MMS-enabled**
+- Media URLs for sending must be **publicly accessible**
+- Supported media types: PNG, JPEG, GIF (and others, see [Twilio docs](https://www.twilio.com/docs/sms/accepted-mime-types))
 
 [HostedDemo]: https://rafacandev.github.io/twilio-sms-web/#/
 [TwilioConsole]: https://www.twilio.com/console?

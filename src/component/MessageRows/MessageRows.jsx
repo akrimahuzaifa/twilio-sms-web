@@ -27,9 +27,9 @@ const MessageBubble = ({ message, onClick }) => {
           <div className="text-[10px] mt-2 text-right timestamp">{message.date ? dayjs(message.date).format("MM/DD/YYYY, hh:mm:ss A") : ""}</div>
         </div>
       </div>
-      {message.media > 0 && (
+      {message.hasMedia && (
         <div className={`mt-2 ${isReceived ? "self-start" : "self-end"}`}>
-          <MediaViewer messageSid={message.messageSid} thumbnail="true" />
+          <MediaViewer messageSid={message.messageSid} thumbnail={true} />
         </div>
       )}
     </div>
