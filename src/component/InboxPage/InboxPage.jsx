@@ -417,7 +417,7 @@ export const InboxPage = () => {
           </div>
           <div className="flex-1 overflow-auto flex flex-col">
             <div className="flex-1 overflow-auto">
-              <MessageRows loading={loadingMessages} messages={currentMessages} />
+              <MessageRows loading={loadingMessages} messages={currentMessages} conversationKey={selectedContact || "all"} />
             </div>
             <ConversationComposer
               selectedContact={selectedContact}

@@ -17,17 +17,13 @@ const getMediaViaFunctions = async (messageSid) => {
   // Pass accountSid as query param - Functions use their own auth credentials
   const url = `${functionsUrl}/get-media?messageSid=${messageSid}&accountSid=${authentication.accountSid}`
 
-  console.log("Fetching media from:", url)
   const response = await axios.get(url)
   
   // Handle response - may be string or already parsed object
   const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data
-  console.log("Media response (parsed):", data)
 
   if (data?.media?.length > 0) {
-    const urls = data.media.map(m => m.url)
-    console.log("Extracted URLs:", urls)
-    return urls
+    return data.media.map(m => m.url)
   }
 
   return []

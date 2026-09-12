@@ -36,29 +36,38 @@ const MessageBubble = ({ message, onClick }) => {
   )
 }
 
-export const MessageRows = ({ loading = true, messages = [] }) => {
+export const MessageRows = ({ loading = true, messages = [], conversationKey = "" }) => {
   const navigate = useNavigate()
   const containerRef = useRef(null)
   const lastMessageRef = useRef(null)
+  const prevConversationKeyRef = useRef(null)
+  const hasScrolledRef = useRef(false)
 
   const handleOnClick = message => {
     navigate(`/message/${message.messageSid}`)
   }
 
   useLayoutEffect(() => {
-    // Prefer scrolling the last message into view for reliable placement
-    try {
-      if (lastMessageRef.current && typeof lastMessageRef.current.scrollIntoView === "function") {
-        lastMessageRef.current.scrollIntoView({ block: "end", behavior: "auto" })
-        return
+    // Only scroll to bottom when:
+    // 1. First load (hasn't scrolled yet)
+    // 2. Conversation changed (user selected different contact)
+    const conversationChanged = prevConversationKeyRef.current !== conversationKey
+    
+    if (conversationChanged || !hasScrolledRef.current) {
+      try {
+        if (lastMessageRef.current && typeof lastMessageRef.current.scrollIntoView === "function") {
+          lastMessageRef.current.scrollIntoView({ block: "end", behavior: "auto" })
+        } else if (containerRef.current) {
+          containerRef.current.scrollTop = containerRef.current.scrollHeight
+        }
+        hasScrolledRef.current = true
+      } catch (e) {
+        // swallow
       }
-      if (containerRef.current) {
-        containerRef.current.scrollTop = containerRef.current.scrollHeight
-      }
-    } catch (e) {
-      // swallow
     }
-  }, [messages, loading])
+    
+    prevConversationKeyRef.current = conversationKey
+  }, [messages, loading, conversationKey])
 
   if (loading)
     return (

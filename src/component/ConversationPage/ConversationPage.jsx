@@ -24,7 +24,7 @@ export const ConversationPage = () => {
         Messages exchanged between <span className="font-semibold">{from}</span> and{" "}
         <span className="font-semibold">{to}</span>
       </p>
-      <MessageRows messages={messages} loading={loading} />
+      <MessageRows messages={messages} loading={loading} conversationKey={`${from}-${to}`} />
     </Layout>
   )
 }

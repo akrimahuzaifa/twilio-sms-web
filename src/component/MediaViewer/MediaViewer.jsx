@@ -77,16 +77,14 @@ export const MediaViewer = ({ messageSid = "", thumbnail = false }) => {
   const isMounted = useIsMounted()
 
   useEffect(() => {
-    if (!messageSid) {
+    // Skip if no messageSid or if it's a temp/optimistic message
+    if (!messageSid || messageSid.startsWith("temp-")) {
       setLoading(false)
       return
     }
 
-    console.log("MediaViewer useEffect: Fetching media for", messageSid)
-
     getTwilioMedia(messageSid)
       .then(m => {
-        console.log("MediaViewer useEffect: Got media", m, "isMounted:", isMounted())
         if (isMounted()) {
           setMedia(m)
         }
@@ -98,7 +96,6 @@ export const MediaViewer = ({ messageSid = "", thumbnail = false }) => {
         }
       })
       .finally(() => {
-        console.log("MediaViewer useEffect: Setting loading to false, isMounted:", isMounted())
         if (isMounted()) {
           setLoading(false)
         }
@@ -106,18 +103,14 @@ export const MediaViewer = ({ messageSid = "", thumbnail = false }) => {
   }, [isMounted, messageSid])
 
   if (loading) {
-    console.log("MediaViewer: Still loading for", messageSid)
     return <Loading />
   }
-
-  console.log("MediaViewer: Rendering", { messageSid, media, error, isFunctionsEnabled: isTwilioFunctionsEnabled() })
 
   if (error) {
     return <MediaError thumbnail={thumbnail} />
   }
 
   if (isEmpty(media)) {
-    console.log("MediaViewer: media is empty for", messageSid)
     return null
   }
 

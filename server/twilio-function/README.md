@@ -38,7 +38,7 @@ Twilio Functions provides a free, serverless solution that integrates natively w
 
 ### Step 3: Create the Functions
 
-Create three functions by clicking **Add +** → **Add Function** for each:
+Create five functions by clicking **Add +** → **Add Function** for each:
 
 #### Function 1: `/media-proxy` (Public)
 
@@ -54,6 +54,16 @@ Create three functions by clicking **Add +** → **Add Function** for each:
 
 - Click the padlock icon 🔒 and change to **Public** 🌐
 - Copy the contents of `get-media.js` into the editor
+
+#### Function 4: `/upload-media` (Public) - For sending MMS
+
+- Click the padlock icon 🔒 and change to **Public** 🌐
+- Copy the contents of `upload-media.js` into the editor
+
+#### Function 5: `/serve-media` (Public) - For sending MMS
+
+- Click the padlock icon 🔒 and change to **Public** 🌐
+- Copy the contents of `serve-media.js` into the editor
 
 ### Step 4: Deploy
 
@@ -147,6 +157,48 @@ Authorization: Basic base64(accountSid:authToken)
   "status": "queued"
 }
 ```
+
+### 4. `/upload-media` (for sending MMS)
+
+Uploads an image from the browser for MMS sending. Stores temporarily in Twilio Sync.
+
+**Prerequisites:**
+- Enable Twilio Sync in your account (it's included with Functions)
+
+**Usage:**
+
+```
+POST /upload-media
+Content-Type: application/json
+
+{
+  "data": "base64-encoded-image-data",
+  "contentType": "image/jpeg"
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "mediaId": "media_xxxxx",
+  "url": "https://your-service.twil.io/serve-media?id=media_xxxxx",
+  "expiresIn": "1 hour"
+}
+```
+
+### 5. `/serve-media` (for sending MMS)
+
+Serves uploaded images for MMS. Used internally by Twilio when sending MMS.
+
+**Usage:**
+
+```
+GET /serve-media?id=media_xxxxx
+```
+
+Returns the binary image data with appropriate Content-Type.
 
 ---
 

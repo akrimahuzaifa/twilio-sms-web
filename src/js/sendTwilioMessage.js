@@ -15,6 +15,117 @@ const buildAuthHeader = (credentials) => {
 }
 
 /**
+ * Convert a File or Blob to base64 string
+ * @param {File|Blob} file 
+ * @returns {Promise<string>}
+ */
+const fileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      // Remove data URL prefix to get pure base64
+      const base64 = reader.result.split(',')[1]
+      resolve(base64)
+    }
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
+
+/**
+ * Compress an image file to reduce size for MMS
+ * Resizes to max dimensions and compresses quality
+ * 
+ * @param {File|Blob} file - Original image
+ * @param {number} maxWidth - Max width in pixels (default 600)
+ * @param {number} maxHeight - Max height in pixels (default 600)
+ * @param {number} quality - JPEG quality 0-1 (default 0.5)
+ * @returns {Promise<Blob>} - Compressed image blob
+ */
+const compressImage = (file, maxWidth = 600, maxHeight = 600, quality = 0.5) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      // Calculate new dimensions maintaining aspect ratio
+      let { width, height } = img
+      
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width
+        width = maxWidth
+      }
+      if (height > maxHeight) {
+        width = (width * maxHeight) / height
+        height = maxHeight
+      }
+
+      // Create canvas and draw resized image
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, width, height)
+
+      // Convert to blob
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            resolve(blob)
+          } else {
+            reject(new Error('Failed to compress image'))
+          }
+        },
+        'image/jpeg',
+        quality
+      )
+    }
+    img.onerror = () => reject(new Error('Failed to load image'))
+    img.src = URL.createObjectURL(file)
+  })
+}
+
+/**
+ * Upload an image to Twilio Functions for MMS sending
+ * Returns a public URL that can be used as mediaUrl
+ * Automatically compresses large images
+ * 
+ * @param {File|Blob} file - Image file to upload
+ * @returns {Promise<{url: string, mediaId: string}>}
+ */
+export const uploadMediaForMms = async (file) => {
+  if (!isTwilioFunctionsEnabled()) {
+    throw new Error("Twilio Functions not configured. MMS sending requires Functions.")
+  }
+
+  // Always compress images to stay under Twilio Functions payload limit (~1MB)
+  console.log(`Compressing image from ${Math.round(file.size / 1024)}KB...`)
+  const processedFile = await compressImage(file)
+  console.log(`Compressed to ${Math.round(processedFile.size / 1024)}KB`)
+
+  const functionsUrl = getTwilioFunctionsUrl()
+  const base64 = await fileToBase64(processedFile)
+  const contentType = 'image/jpeg' // Always JPEG after compression
+
+  const response = await axios.post(
+    `${functionsUrl}/upload-media`,
+    {
+      data: base64,
+      contentType: contentType,
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  )
+
+  return {
+    url: response.data.url,
+    mediaId: response.data.mediaId,
+  }
+}
+
+/**
  * Send SMS message directly via Twilio API
  * @param {Authentication} authentication
  * @param {string} to
