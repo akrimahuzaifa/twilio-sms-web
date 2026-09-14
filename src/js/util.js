@@ -20,3 +20,26 @@ export const copyToClipboard = s =>
 
 // Starts with plus followed by at least 11 digits
 export const phonePattern = "^\\+\\d{11,}$"
+
+export const normalizePhoneNumber = rawValue => {
+  if (!rawValue && rawValue !== 0) return null
+
+  const digits = String(rawValue).replace(/\D/g, "")
+  if (!digits || digits.length < 11) return null
+
+  return `+${digits}`
+}
+
+export const parseRecipientList = rawValue => {
+  if (Array.isArray(rawValue)) {
+    return rawValue.map(normalizePhoneNumber).filter(Boolean)
+  }
+
+  if (!rawValue) return []
+
+  return String(rawValue)
+    .split(/[\n,;]+/)
+    .map(value => normalizePhoneNumber(value))
+    .filter(Boolean)
+    .filter((value, index, list) => list.indexOf(value) === index)
+}

@@ -1,6 +1,7 @@
 import axios from "axios"
 import { toCredentials, Authentication } from "../context/AuthenticationProvider"
 import { getTwilioFunctionsUrl, isTwilioFunctionsEnabled } from "./siteConfig"
+import { parseRecipientList } from "./util"
 
 export const FOOTER = "\n\nReply HELP for help. Reply STOP to unsubscribe."
 
@@ -226,15 +227,61 @@ const sendMmsDirect = async (authentication, to, from, body, mediaUrl) => {
 }
 
 /**
+ * Send one SMS message to multiple recipients in sequence.
+ * Each recipient still gets their own Twilio message, which preserves the app's one-thread-per-contact behavior.
+ * @param {Authentication} authentication
+ * @param {string[]|string} recipients
+ * @param {string} from
+ * @param {string} body
+ * @returns {Promise<{sent: string[], failed: {recipient: string, error: Error}[]}>}
+ */
+export const sendTwilioBatchMessage = async (authentication = new Authentication(), recipients = [], from = "", body = "") => {
+  const normalizedRecipients = parseRecipientList(recipients)
+  if (normalizedRecipients.length === 0) {
+    throw new Error("No valid phone numbers were provided.")
+  }
+
+  const sent = []
+  const failed = []
+
+  for (const recipient of normalizedRecipients) {
+    try {
+      const sid = await sendSmsDirect(authentication, recipient, from, body)
+      sent.push(sid)
+    } catch (error) {
+      failed.push({ recipient, error })
+    }
+  }
+
+  return {
+    sent,
+    failed,
+    totalRequested: normalizedRecipients.length,
+    totalSent: sent.length,
+    totalFailed: failed.length,
+  }
+}
+
+/**
  * Send an SMS message (text only, no media)
  * @param {Authentication} authentication
- * @param {string} to - Recipient phone number
+ * @param {string|string[]} to - Recipient phone number(s)
  * @param {string} from - Sender phone number (must be a Twilio number)
  * @param {string} body - Message text
- * @returns {Promise<string>} Message SID
+ * @returns {Promise<string|{sent: string[], failed: {recipient: string, error: Error}[], ...}>} Message SID for single send, or batch summary for list sends
  */
 export const sendTwilioMessage = async (authentication = new Authentication(), to = "", from = "", body = "") => {
-  return sendSmsDirect(authentication, to, from, body)
+  const recipients = parseRecipientList(to)
+
+  if (recipients.length > 1) {
+    return sendTwilioBatchMessage(authentication, recipients, from, body)
+  }
+
+  if (recipients.length === 1) {
+    return sendSmsDirect(authentication, recipients[0], from, body)
+  }
+
+  throw new Error("No valid phone numbers were provided.")
 }
 
 /**

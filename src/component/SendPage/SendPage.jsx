@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useAuthentication } from "../../context/AuthenticationProvider"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
-import { phonePattern } from "../../js/util"
+import { parseRecipientList, phonePattern } from "../../js/util"
 import { Layout } from "../Layout/Layout"
 import { PhoneCombobox } from "../PhoneCombobox/PhoneComboox"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
@@ -46,7 +46,7 @@ export const SendPage = () => {
 
   const handleToOnChange = e => {
     const val = e.target.value
-    setTo("+" + val.replace(/\D/g, ""))
+    setTo(val.replace(/[^\d+,\s;]/g, ""))
   }
 
   const handleSend = () => {
@@ -54,14 +54,20 @@ export const SendPage = () => {
 
     setSendingMessage(true)
     sendTwilioMessage(authentication, to, from, message)
+      .then(result => {
+        const sent = result && typeof result === "object" && Array.isArray(result.sent) ? result.sent : [result]
+        const messageSid = sent[0]
+        if (messageSid) navigate(`/sent/${messageSid}`)
+        else setError(new Error("No messages were sent."))
+      })
       .catch(setError)
-      .then(messageSid => navigate(`/sent/${messageSid}`))
       .finally(() => setSendingMessage(false))
   }
 
   const isValid = () => {
     const isValidFrom = phoneNumbers.includes(from)
-    const isValidTo = to.match(phonePattern) !== null
+    const recipients = parseRecipientList(to)
+    const isValidTo = recipients.length > 0 && recipients.every(phone => phone.match(phonePattern))
     // Consider only the user-typed portion (before the signature) for validation
     const userPortion = message.includes(signatureString) ? message.split(signatureString)[0].trim() : message.trim()
     const isValidMessage = userPortion.length > 0 && message.length < 500
@@ -87,7 +93,13 @@ export const SendPage = () => {
       </div>
       <div className="flex items-center mt-2">
         <label className="w-14">To:</label>
-        <input type="tel" value={to} pattern={phonePattern} onChange={handleToOnChange} disabled={sendingMessage} />
+        <input
+          type="text"
+          value={to}
+          onChange={handleToOnChange}
+          disabled={sendingMessage}
+          placeholder="+15551234567, +15557654321"
+        />
       </div>
       <textarea
         ref={textareaRef}

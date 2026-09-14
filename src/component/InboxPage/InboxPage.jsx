@@ -8,7 +8,7 @@ import { MessageRows } from "../MessageRows/MessageRows"
 import { useNavigate } from "react-router-dom"
 import { allPhones, MessageFilterEnum, Selector } from "./Selector"
 import { PhoneCombobox } from "../PhoneCombobox/PhoneComboox"
-import { phonePattern } from "../../js/util"
+import { parseRecipientList, phonePattern } from "../../js/util"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
 import { getMessages } from "./getMessages"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
@@ -244,8 +244,9 @@ export const InboxPage = () => {
   const _userPortion = sendMessage
     ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || MessageFooter)[0].trim()
     : ""
+  const parsedRecipients = parseRecipientList(sendTo)
   const isValidFromPanel = phoneNumbers && phoneNumbers.length > 0 && phoneNumbers.includes(sendFrom)
-  const isValidToPanel = sendTo && sendTo.match(phonePattern)
+  const isValidToPanel = parsedRecipients.length > 0 && parsedRecipients.every(phone => phone.match(phonePattern))
   const isValidMessagePanel = _userPortion.length > 0 && sendMessage.length < 500
   const canSend = isValidFromPanel && isValidToPanel && isValidMessagePanel
 
@@ -355,11 +356,11 @@ export const InboxPage = () => {
               <div className="mb-3 flex items-center">
                 <label className="w-14">To:</label>
                 <input
-                  type="tel"
+                  type="text"
                   value={sendTo}
-                  pattern={phonePattern}
-                  onChange={e => setSendTo("+" + e.target.value.replace(/\D/g, ""))}
+                  onChange={e => setSendTo(e.target.value.replace(/[^\d+,\s;]/g, ""))}
                   disabled={sendingMessage}
+                  placeholder="+15551234567, +15557654321"
                 />
               </div>
               <textarea
@@ -378,7 +379,8 @@ export const InboxPage = () => {
                     if (sendingMessage || !canSend) return
                     // keep the existing validation as a safeguard
                     const isValidFrom = phoneNumbers.includes(sendFrom)
-                    const isValidTo = sendTo && sendTo.match(phonePattern)
+                    const recipients = parseRecipientList(sendTo)
+                    const isValidTo = recipients.length > 0 && recipients.every(phone => phone.match(phonePattern))
                     const userPortion = sendMessage
                       ? sendMessage.split(import.meta.env.VITE_SMS_SIGNATURE || MessageFooter)[0].trim()
                       : ""
@@ -389,8 +391,20 @@ export const InboxPage = () => {
                     }
                     setSendingMessage(true)
                     try {
-                      await sendTwilioMessage(authentication, sendTo, sendFrom, sendMessage)
-                      pushToast("Message sent")
+                      const sendResult = await sendTwilioMessage(authentication, recipients, sendFrom, sendMessage)
+                      const sentCount = sendResult?.sent?.length || 1
+                      const failedCount = sendResult?.totalFailed || 0
+
+                      if (sendResult && typeof sendResult === "object" && Array.isArray(sendResult.sent)) {
+                        pushToast(
+                          failedCount > 0
+                            ? `Sent to ${sentCount} recipients (${failedCount} failed)`
+                            : `Sent to ${sentCount} recipients`,
+                        )
+                      } else {
+                        pushToast("Message sent")
+                      }
+
                       setShowSendPanel(false)
                       setSendTo("")
                       setSendMessage(
@@ -399,7 +413,7 @@ export const InboxPage = () => {
                           : MessageFooter,
                       )
                     } catch (e) {
-                      pushToast("Message failed to send")
+                      pushToast(e?.message || "Message failed to send")
                     } finally {
                       setSendingMessage(false)
                     }
