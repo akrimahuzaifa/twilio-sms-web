@@ -36,7 +36,8 @@
 - [x] GitHub repo variable `VITE_TWILIO_FUNCTIONS_URL` = `https://alpha-message-6434.twil.io` (user confirmed 2026-10-28)
 - [x] GitHub → Settings → Environments → `github-pages` → Deployment branches → add `staging` (user confirmed 2026-10-28)
 - [x] Create and push the `staging` branch from `mms-setup` (done 2026-10-28)
-- [ ] Confirm the Actions run "Build and publish to GitHub Pages" for `staging` succeeded
+- [x] Confirm the Actions run "Build and publish to GitHub Pages" for `staging` succeeded (run 40604100435, success)
+- [ ] Smoke-test production (sign in, open inbox, send a plain SMS). Its dependencies were re-resolved on this deploy; see Open issues.
 - [ ] Run the staging test checklist below
 - [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
 
@@ -66,6 +67,7 @@ Security (priority 2):
 - Functions are deployed by hand-pasting. Consider the Twilio Serverless Toolkit (`twilio serverless:deploy`) driven from CI.
 
 Other:
+- `package-lock.json` is gitignored, so CI `npm install` resolves the latest semver-compatible deps on every build, and builds aren't reproducible. Production was rebuilt with fresh deps on 2026-10-28 (bundle hash changed CpX3Z6tI → FQJ4PsJg, same app code). Fix: un-ignore and commit the lockfile, use `npm ci` in CI (do it on staging first).
 - ~29 pre-existing ESLint errors.
 - Shared Functions service across staging and prod: function changes must stay compatible with what's on `main`.
 - `.env` has `VITE_API_BASE` and `VITE_API_BASE_CLOUD`, which nothing in `src/` references.
@@ -85,4 +87,5 @@ Other:
 - **Docs:** CLAUDE.md, HANDOFF.md, docs/DEPLOYMENT.md, docs/ARCHITECTURE.md, .env.example; Functions README gained the GitHub variable step.
 - **Verified:** `node --check` on all functions; the path allowlist rejects external and look-alike hosts; prod and staging builds give the correct asset base; no new lint errors.
 - **Not verified:** the actual CI run, staging deploy, and real MMS send/receive on Pages.
+- Deploy run 40604100435 succeeded. Verified with curl: `/` (prod) returns 200, has no Functions URL and no credentials; `/staging/` returns 200, has the Functions URL and the staging base, and no credentials.
 - Follow-up: user added `staging` to the github-pages deployment branches; pushed `mms-setup` and created/pushed `staging` from it to trigger the first two-site deploy.
