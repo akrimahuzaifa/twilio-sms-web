@@ -59,7 +59,7 @@ exports.handler = async function (context, event, callback) {
 
     // Wrap ALL logic in try-catch to ensure we always return with CORS headers
     try {
-        const { mediaUrl, token, accountSid: clientAccountSid } = event
+        const { mediaUrl, token } = event
 
         // Basic validation
         if (!mediaUrl) {
@@ -88,14 +88,21 @@ exports.handler = async function (context, event, callback) {
             return callback(null, response)
         }
 
-        // Use provided accountSid or fall back to context
-        const accountSid = clientAccountSid || context.ACCOUNT_SID
+        const accountSid = context.ACCOUNT_SID
         const authToken = context.AUTH_TOKEN
 
-        // Construct full Twilio API URL
-        const fullUrl = mediaUrl.startsWith('http')
-            ? mediaUrl
-            : `https://api.twilio.com${mediaUrl}`
+        // Only allow this account's message media paths. Requests are sent with our Auth Token,
+        // so an arbitrary URL here would leak credentials to whatever host it points at.
+        const relativePath = mediaUrl.replace(/^https:\/\/api\.twilio\.com/, '')
+        const allowedPath = new RegExp(`^/2010-04-01/Accounts/${accountSid}/Messages/(MM|SM)[0-9a-f]{32}/Media/ME[0-9a-f]{32}$`)
+        if (!allowedPath.test(relativePath)) {
+            response.appendHeader('Content-Type', 'application/json')
+            response.setStatusCode(400)
+            response.setBody(JSON.stringify({ error: 'Invalid mediaUrl' }))
+            return callback(null, response)
+        }
+
+        const fullUrl = `https://api.twilio.com${relativePath}`
 
         console.log(`Proxying media request: ${fullUrl}`)
 

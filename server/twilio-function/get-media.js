@@ -74,7 +74,7 @@ exports.handler = async function (context, event, callback) {
     // Wrap ALL logic in try-catch to ensure we always return with CORS headers
     try {
         // Get parameters
-        const { messageSid, accountSid: clientAccountSid } = event
+        const { messageSid } = event
 
         // Parse authorization header if present
         let parsedAuth = null
@@ -99,7 +99,8 @@ exports.handler = async function (context, event, callback) {
             client = require('twilio')(parsedAuth.username, parsedAuth.password)
         } else {
             // Use service credentials - MUST have "Add my Twilio Credentials" checked
-            accountSid = clientAccountSid || context.ACCOUNT_SID
+            // media-proxy only serves the service's own account, so ignore the client-supplied SID here
+            accountSid = context.ACCOUNT_SID
 
             // Check if credentials are available
             if (!context.ACCOUNT_SID || !context.AUTH_TOKEN) {

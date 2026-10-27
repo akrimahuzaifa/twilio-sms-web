@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react"
 import { useAuthentication } from "../../context/AuthenticationProvider"
 import { sendTwilioMessage } from "../../js/sendTwilioMessage"
 import { LayoutMinimal } from "../Layout/Layout"
-import { siteConfig } from "../../js/siteConfig"
+import { siteConfig, isStaging } from "../../js/siteConfig"
 import { InboxOutlined, SendOutlined, LeftOutlined } from "@ant-design/icons"
 import { MessageRows } from "../MessageRows/MessageRows"
 import { useNavigate } from "react-router-dom"
@@ -18,7 +18,8 @@ import { MessageDirection } from "../../js/types"
 import notif from "../../assets/notification.mp3"
 import { FOOTER as MessageFooter } from "../../js/sendTwilioMessage"
 
-const LAST_SEEN_KEY = "twilio_sms_last_seen"
+// Staging shares production's origin (and localStorage), so keep its unread state separate
+const LAST_SEEN_KEY = isStaging() ? "twilio_sms_last_seen_staging" : "twilio_sms_last_seen"
 
 const otherFromMessage = m => (m.direction === "received" ? m.from : m.to)
 

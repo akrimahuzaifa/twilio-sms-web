@@ -171,6 +171,7 @@ const sendMmsViaFunctions = async (authentication, to, from, body, mediaUrl) => 
   const response = await axios.post(
     url,
     {
+      accountSid: authentication.accountSid,
       to,
       from,
       body: bodyWithFooter,

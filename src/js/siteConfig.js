@@ -27,4 +27,10 @@ export const isTwilioFunctionsEnabled = () => {
   return url && url.length > 0 && url.includes("twil.io")
 }
 
+/**
+ * True for the staging build, which CI publishes under /twilio-sms-web/staging/ (see docs/DEPLOYMENT.md)
+ * @returns {boolean}
+ */
+export const isStaging = () => import.meta.env.BASE_URL.includes("/staging/")
+
 export default siteConfig

@@ -1,31 +1,68 @@
 name: Build and publish to GitHub Pages
+# One Pages site per repo and every deploy replaces the whole site, so each run builds BOTH:
+#   main    -> https://akrimahuzaifa.github.io/twilio-sms-web/          (production)
+#   staging -> https://akrimahuzaifa.github.io/twilio-sms-web/staging/  (staging)
+# See docs/DEPLOYMENT.md before changing this file.
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Never let two deploys race; the later one would overwrite the earlier one's site.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     name: Build and deploy
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Checkout repository
+      - name: Checkout production (main)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod-src
+
+      - name: Checkout staging
+        uses: actions/checkout@v4
+        with:
+          ref: staging
+          path: staging-src
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "18"
 
-      - name: Install dependencies
-        run: npm install
+      # .env is gitignored, so Vite vars come from repo Settings → Secrets and variables → Actions → Variables.
+      # Never add VITE_AUTHENTICATION_* here: every VITE_ var is embedded in the public bundle.
+      - name: Build production
+        working-directory: prod-src
+        run: npm install && npm run build
+        env:
+          # Leave PROD_VITE_TWILIO_FUNCTIONS_URL unset until MMS is approved on staging; that keeps production as-is.
+          VITE_TWILIO_FUNCTIONS_URL: ${{ vars.PROD_VITE_TWILIO_FUNCTIONS_URL }}
 
-      - name: Build production assets
-        run: npm run build
+      - name: Build staging
+        working-directory: staging-src
+        run: npm install && npx vite build --base=/twilio-sms-web/staging/
+        env:
+          VITE_TWILIO_FUNCTIONS_URL: ${{ vars.VITE_TWILIO_FUNCTIONS_URL }}
+
+      - name: Combine sites
+        run: |
+          mkdir -p site/staging
+          cp -r prod-src/dist/. site/
+          cp -r staging-src/dist/. site/staging/
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -33,7 +70,8 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./site
 
       - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4

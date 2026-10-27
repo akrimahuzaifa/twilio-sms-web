@@ -14,10 +14,16 @@ import { ConversationPage } from "./component/ConversationPage/ConversationPage"
 import { SendPage } from "./component/SendPage/SendPage"
 import { MessagePage } from "./component/MessagePage/MessagePage"
 import { SentPage } from "./component/SentPage/SentPage"
+import { isStaging } from "./js/siteConfig"
 
 export const App = () => {
   return (
     <div className="h-full">
+      {isStaging() && (
+        <div className="fixed top-0 right-0 z-50 bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-bl">
+          STAGING
+        </div>
+      )}
       <AuthenticationProvider>
         <ComposerProvider>
           <HashRouter>

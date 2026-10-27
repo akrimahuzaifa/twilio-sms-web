@@ -85,6 +85,11 @@ Add your Functions URL to the `.env` file:
 VITE_TWILIO_FUNCTIONS_URL=https://sms-web-backend-XXXX.twil.io
 ```
 
+`.env` is gitignored, so the GitHub Pages build does not see it. For the deployed site, add the same value in
+GitHub → repo **Settings** → **Secrets and variables** → **Actions** → **Variables** tab → **New repository variable**
+named `VITE_TWILIO_FUNCTIONS_URL`, then re-run the **Build and publish to GitHub Pages** workflow.
+Without it the deployed app shows "Media attachment" placeholders and hides the attach button.
+
 ---
 
 ## Function Reference

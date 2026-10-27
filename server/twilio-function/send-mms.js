@@ -79,8 +79,16 @@ exports.handler = async function (context, event, callback) {
     const authHeader = event.request?.headers?.authorization;
     const parsedAuth = parseBasicAuth(authHeader);
 
+    // Callers must authenticate with their own credentials; never fall back to the service's,
+    // otherwise anyone who finds this URL in the public bundle can send messages on our account.
+    if (!parsedAuth || !parsedAuth.username || !parsedAuth.password) {
+        response.setStatusCode(401);
+        response.setBody(JSON.stringify({ error: 'Missing Authorization header' }));
+        return callback(null, response);
+    }
+
     // Get message parameters from request body
-    const { to, from, body, mediaUrl } = event;
+    const { to, from, body, mediaUrl, accountSid } = event;
 
     // Validate required fields
     if (!to || !from) {
@@ -103,16 +111,10 @@ exports.handler = async function (context, event, callback) {
     }
 
     try {
-        // Use client credentials if provided, otherwise use service credentials
-        let client;
-        if (parsedAuth && parsedAuth.username && parsedAuth.password) {
-            // Create a new client with provided credentials
-            client = require('twilio')(parsedAuth.username, parsedAuth.password);
-        } else {
-            // Explicitly create client with Account SID and Auth Token
-            // (Don't use getTwilioClient() as it may pick up API Keys instead)
-            client = require('twilio')(context.ACCOUNT_SID, context.AUTH_TOKEN);
-        }
+        // API Key credentials (SK...) also need the Account SID they belong to
+        const client = parsedAuth.username.startsWith('SK')
+            ? require('twilio')(parsedAuth.username, parsedAuth.password, { accountSid })
+            : require('twilio')(parsedAuth.username, parsedAuth.password);
 
         // Build message options
         const messageOptions = {
