@@ -1,7 +1,7 @@
 # HANDOFF: αMessage (twilio-sms-web)
 
 > Living document. Read it at the start of every AI session and update it after every patch (see [CLAUDE.md](CLAUDE.md)).
-> Last updated: **2026-10-28** (office machine)
+> Last updated: **2026-10-28** (home machine)
 
 ## What this is
 
@@ -34,8 +34,9 @@
 
 - [x] Paste updated `media-proxy.js`, `get-media.js`, `send-mms.js` into the Twilio Console and Deploy All (user confirmed 2026-10-28)
 - [x] GitHub repo variable `VITE_TWILIO_FUNCTIONS_URL` = `https://alpha-message-6434.twil.io` (user confirmed 2026-10-28)
-- [ ] GitHub → Settings → Environments → `github-pages` → Deployment branches → add `staging`
-- [ ] Create and push the `staging` branch from `mms-setup` (`git switch -c staging mms-setup && git push -u origin staging`)
+- [x] GitHub → Settings → Environments → `github-pages` → Deployment branches → add `staging` (user confirmed 2026-10-28)
+- [x] Create and push the `staging` branch from `mms-setup` (done 2026-10-28)
+- [ ] Confirm the Actions run "Build and publish to GitHub Pages" for `staging` succeeded
 - [ ] Run the staging test checklist below
 - [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
 
@@ -71,8 +72,8 @@ Other:
 
 ## Repo state
 
-- Working branch: `mms-setup`. `main` = `origin/main` = production = `d5eb59b` at session start.
-- Branches: `main` (prod), `mms-setup` (MMS work), `staging` (to be created). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
+- Working branch: `mms-setup`. `main` = `origin/main` = production = `d5eb59b` (unchanged).
+- `staging` = `mms-setup` (pushed 2026-10-28). Branches: `main` (prod), `staging`, `mms-setup` (MMS work). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
 
@@ -84,3 +85,4 @@ Other:
 - **Docs:** CLAUDE.md, HANDOFF.md, docs/DEPLOYMENT.md, docs/ARCHITECTURE.md, .env.example; Functions README gained the GitHub variable step.
 - **Verified:** `node --check` on all functions; the path allowlist rejects external and look-alike hosts; prod and staging builds give the correct asset base; no new lint errors.
 - **Not verified:** the actual CI run, staging deploy, and real MMS send/receive on Pages.
+- Follow-up: user added `staging` to the github-pages deployment branches; pushed `mms-setup` and created/pushed `staging` from it to trigger the first two-site deploy.
