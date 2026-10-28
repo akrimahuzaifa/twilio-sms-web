@@ -43,14 +43,25 @@ export const getTwilioMessagesByPhoneNumber = async phoneNumber => {
 }
 
 /**
+ * Twilio's max page size; used to load a single conversation's full history
+ */
+export const MAX_PAGE_SIZE = 1000
+
+/**
+ * @param {string} from
+ * @param {string} to
+ * @param {number} [pageSize] Twilio defaults to 50 (newest first) when omitted
  * @returns {Promise<Array<Message>>}
  */
-export const getTwilioMessages = async (from = "", to = "") => {
+export const getTwilioMessages = async (from = "", to = "", pageSize = undefined) => {
   const authentication = getAuthentication()
   const credentials = toCredentials(authentication)
   const url = `https://api.twilio.com/2010-04-01/Accounts/${authentication.accountSid}/Messages.json`
 
   const params = {}
+  if (pageSize) {
+    params.PageSize = pageSize
+  }
   if (to.length > 0) {
     params.To = to
   }

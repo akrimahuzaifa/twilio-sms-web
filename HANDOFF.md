@@ -1,7 +1,7 @@
 # HANDOFF: αMessage (twilio-sms-web)
 
 > Living document. Read it at the start of every AI session and update it after every patch (see [CLAUDE.md](CLAUDE.md)).
-> Last updated: **2026-10-28 night** (home machine). Next session: office, morning of 2026-10-29. **Start with "Next session: start here" below.**
+> Last updated: **2026-10-29**. **Start with "Next session: start here" below.**
 
 ## What this is
 
@@ -26,8 +26,8 @@
 - Two-site Pages workflow added so changes can be tested at `/staging/` before touching production.
 - Staging test (2026-10-28): **receive works** (images show).
 - Send bug 1, 413 at `/upload-media`: fixed (chunked Sync storage), and the user deployed the functions. Upload now succeeds.
-- Send bug 2: "MMS sent" but it arrives as **text only**. Root cause found, fixed in the client (`dff87c3` + the commit after it), **not yet on staging**. See the log.
-- New bug: old **sent** messages are missing from older conversations. Diagnosed, not fixed. See "Next session".
+- Send bug 2: "MMS sent" but it arrives as **text only**. Fixed in `83fcafd`, deployed to staging 2026-10-29 (run 40753083549). **Verified by the user 2026-10-29:** an MMS sent from staging to +14046800340 arrived with the image, and the recipient's reply MMS showed in the thread. **MMS send + receive works on staging.**
+- Missing old **sent** messages in conversations: fixed 2026-10-29, committed and staged with the user's OK. The user still needs to check it in the browser.
 
 **Priority 2: security.** Two critical Function holes fixed (2026-10-28; see log). The rest is under Open issues.
 
@@ -45,31 +45,24 @@
 - [ ] Run the staging test checklist below
 - [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
 
-## Next session: start here (office, 2026-10-29)
+## Next session: start here
 
-1. `git pull` on `mms-setup`, then read this file.
-2. **Deploy the text-only-MMS fix to staging** (needs the user's OK to push): `git switch staging && git merge --ff-only mms-setup && git push origin staging && git switch mms-setup`. Watch the Actions run.
-3. The user sends an MMS from staging to a test phone (ideally their own phone, so delivery can be confirmed without waiting on others). Verify with the Twilio API: the newest message `From=+14694377816` should have `num_media=1`. A read-only check script is in the log entry for 2026-10-28 night.
-4. **Fix missing old sent messages** (diagnosis below), on `mms-setup`, then stage.
-5. Continue the staging checklist; also the production smoke test.
-
-### Diagnosis: old sent messages missing from conversations
-- `src/component/InboxPage/getMessages.js` calls `getTwilioMessages(phoneNumber)` (From) and `getTwilioMessages(undefined, phoneNumber)` (To) with **no PageSize and no paging**. Twilio returns 50 per page, newest first.
-- +14694377816 has **128 sent** messages since 2025-12-03, so only the newest 50 sent and newest 50 received are loaded. Older test conversations (+12674715851, +14046800340, +17733978211, +14046800905) keep their received side because inbound volume is lower, but lose the sent side.
-- Same pattern in `ConversationPage.jsx` (`getTwilioMessages(from,to)` + `(to,from)`).
-- Fix options: (a) when a contact is selected, fetch that conversation specifically (`From=our&To=contact` + `From=contact&To=our`, which is small and complete) and merge it into the thread. The inbox list can stay "recent". (b) Follow `next_page_uri` / larger `PageSize` for the list. Prefer (a), plus a modest PageSize bump for the list. Mind the polling interval: don't page through everything on every poll.
+1. ~~Send an MMS from staging~~ Done 2026-10-29: delivered with the image, and the reply MMS was received.
+2. **User:** on staging, check that old test conversations (+12674715851, +14046800340, +14046800905) now show their sent messages.
+3. Finish the staging checklist and the production smoke test, then decide on release (docs/DEPLOYMENT.md).
+4. After release: priority 2 (security backlog under Open issues).
 
 ## Staging test checklist (MMS)
 
 On https://akrimahuzaifa.github.io/twilio-sms-web/staging/ (check the orange STAGING badge), sign in the way the team does (API Key):
 
-- [ ] DevTools console does **not** show "Twilio Functions not configured"
-- [ ] An existing MMS conversation (e.g. +17733978211) shows the images, not placeholders
-- [ ] Attach button (paperclip) is visible in the reply box
-- [ ] Send an image via the paperclip to a test phone. It arrives, and the image appears in the thread after refresh
+- [x] DevTools console does **not** show "Twilio Functions not configured"
+- [x] An existing MMS conversation (e.g. +17733978211) shows the images, not placeholders (2026-10-28)
+- [x] Attach button (paperclip) is visible in the reply box
+- [x] Send an image via the paperclip to a test phone. It arrives, and the image appears in the thread after refresh (2026-10-29)
 - [ ] Send an image via paste (Ctrl+V)
 - [ ] Send text + image together; the footer text is present
-- [ ] Reply with an MMS from the phone. It shows up in the inbox with the image
+- [x] Reply with an MMS from the phone. It shows up in the inbox with the image (2026-10-29)
 - [ ] Plain SMS and multi-recipient SMS still work
 - [ ] Production URL still behaves exactly as before (placeholders, no paperclip). It should be unchanged until release.
 
@@ -85,6 +78,7 @@ Security (priority 2):
 - Functions are deployed by hand-pasting. Consider the Twilio Serverless Toolkit (`twilio serverless:deploy`) driven from CI.
 
 Other:
+- `lodash` is imported (`isEmpty`) in MediaViewer, MessageRows and getTwilioPhoneNumbers but is not in package.json; it only works because another package installs it. Add it as a dependency, or replace those imports.
 - Server-side cleanup option: return objects instead of `JSON.stringify(...)` from Functions to avoid double encoding. The client now tolerates both, so this is optional and needs a Console deploy.
 - `package-lock.json` is gitignored, so CI `npm install` resolves the latest semver-compatible deps on every build, and builds aren't reproducible. Production was rebuilt with fresh deps on 2026-10-28 (bundle hash changed CpX3Z6tI → FQJ4PsJg, same app code). Fix: un-ignore and commit the lockfile, use `npm ci` in CI (do it on staging first).
 - ~29 pre-existing ESLint errors.
@@ -97,6 +91,13 @@ Other:
 - `staging` = `mms-setup` (pushed 2026-10-28). Branches: `main` (prod), `staging`, `mms-setup` (MMS work). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
+
+### 2026-10-29: staging deploy of the MMS fix + conversation history fix
+- With the user's OK, fast-forwarded `staging` to `83fcafd` and pushed. Run 40753083549 succeeded; the live staging bundle contains the new upload error string, which confirms the fix is deployed.
+- **Missing sent messages fix:** `getTwilioMessages(from, to, pageSize)` gained an optional PageSize (`MAX_PAGE_SIZE = 1000`; existing callers keep Twilio's default of 50, so the list and polling cost are unchanged). New `getConversationMessages(contact, phoneNumber, filter)` in `InboxPage/getMessages.js` fetches `From=contact` + `To=contact` (respecting the filter, then narrowed to the selected number). `InboxPage` loads it when a contact is selected (with a cancel guard) and merges it with the polled messages, deduped by SID; polled entries win, so optimistic sends still show. `ConversationPage` uses `MAX_PAGE_SIZE`. Dedupe is hand-written: lodash isn't a declared dependency (existing imports rely on it being installed by another package; see Open issues).
+- **Verified (read-only API):** sent/received per test contact, old view vs new: +12674715851 0/6 to 8/6; +14046800340 1/8 to 6/8; +17733978211 1/2 to 2/2; +14046800905 0/1 to 1/1. Build passes; lint count on the touched files is unchanged (28 to 28).
+- User verified the MMS round trip on staging (send to +14046800340 with the image delivered, reply MMS received). Committed the history fix and staged it with the user's OK.
+- **Not verified:** in-browser behavior of the history fix (awaiting the user's check on staging). Conversations with more than 1000 messages in one direction would still be truncated, which is fine for now.
 
 ### 2026-10-28 night (home): MMS arrives as text only
 - **User report:** after the chunking deploy, staging said "MMS sent" to 2 numbers, but the thread showed only the footer text and no image.

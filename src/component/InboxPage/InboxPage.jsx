@@ -10,7 +10,8 @@ import { allPhones, MessageFilterEnum, Selector } from "./Selector"
 import { PhoneCombobox } from "../PhoneCombobox/PhoneComboox"
 import { parseRecipientList, phonePattern } from "../../js/util"
 import { getTwilioPhoneNumbers } from "../../js/getTwilioPhoneNumbers"
-import { getMessages } from "./getMessages"
+import { getMessages, getConversationMessages } from "./getMessages"
+import { sortByDate } from "../../js/getTwilioMessages"
 import { ErrorLabel } from "../ErrorLabel/ErrorLabel"
 import ConversationComposer from "../ConversationComposer/ConversationComposer"
 import Toast from "../Toast/Toast"
@@ -239,7 +240,28 @@ export const InboxPage = () => {
     // deprecated in favor of ConversationComposer
   }
 
-  const currentMessages = selectedContact ? messages.filter(m => otherFromMessage(m) === selectedContact) : messages
+  // Full history for the open conversation; `messages` (polled) only has the newest 50 sent + 50 received
+  const [conversationHistory, setConversationHistory] = useState([])
+  useEffect(() => {
+    setConversationHistory([])
+    if (!selectedContact) return
+    let cancelled = false
+    getConversationMessages(selectedContact, phoneNumber, messageFilter)
+      .then(ms => !cancelled && setConversationHistory(ms))
+      .catch(e => console.error("Failed to load conversation history", e))
+    return () => {
+      cancelled = true
+    }
+  }, [selectedContact, phoneNumber, messageFilter])
+
+  // Polled messages win so optimistic sends and status updates show; history fills in older ones
+  const currentMessages = selectedContact
+    ? (() => {
+        const polled = messages.filter(m => otherFromMessage(m) === selectedContact)
+        const seen = new Set(polled.map(m => m.messageSid))
+        return polled.concat(conversationHistory.filter(m => !seen.has(m.messageSid))).sort(sortByDate)
+      })()
+    : messages
 
   // validation for slide-in send panel
   const _userPortion = sendMessage

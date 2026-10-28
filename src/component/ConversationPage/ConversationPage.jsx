@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom"
 import { Layout } from "../Layout/Layout"
 import { useEffect, useState } from "react"
-import { getTwilioMessages, sortByDate } from "../../js/getTwilioMessages"
+import { getTwilioMessages, sortByDate, MAX_PAGE_SIZE } from "../../js/getTwilioMessages"
 import { MessageRows } from "../MessageRows/MessageRows"
 
 export const ConversationPage = () => {
@@ -10,8 +10,8 @@ export const ConversationPage = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const ft = getTwilioMessages(from, to)
-    const tf = getTwilioMessages(to, from)
+    const ft = getTwilioMessages(from, to, MAX_PAGE_SIZE)
+    const tf = getTwilioMessages(to, from, MAX_PAGE_SIZE)
     Promise.all([ft, tf])
       .then(msg => setMessages(msg.flat().sort(sortByDate)))
       .then(() => setLoading(false))
