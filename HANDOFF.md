@@ -1,7 +1,7 @@
 # HANDOFF: αMessage (twilio-sms-web)
 
 > Living document. Read it at the start of every AI session and update it after every patch (see [CLAUDE.md](CLAUDE.md)).
-> Last updated: **2026-10-29**. **Start with "Next session: start here" below.**
+> Last updated: **2026-10-29 night** (home machine). Next session: office or home. **Start with "Next session: start here" below.**
 
 ## What this is
 
@@ -45,12 +45,12 @@
 - [ ] Smoke-test production (sign in, open inbox, send a plain SMS). Its dependencies were re-resolved on this deploy; see Open issues.
 - [ ] Run the staging test checklist below
 - [x] Release to production (user OK and `PROD_VITE_TWILIO_FUNCTIONS_URL` created 2026-10-29)
-- [ ] Production check after the release (see Next session)
+- [x] Production check after the release: the user verified MMS (text + image to +14046800340, reply received) and SMS on production, 2026-10-29
 
 ## Next session: start here
 
-1. If not done: the user does a production check (Ctrl+F5 on the live URL, an MMS conversation shows images, the paperclip is visible, a plain SMS sends).
-2. Start **priority 2: security**. Work through Open issues → Security, on a new branch off `main` (e.g. `security-hardening`), stage, then release. Suggested order: (a) set `ALLOWED_ORIGIN` in the Console; (b) require caller creds on `/upload-media` and `/get-media`; (c) signed, expiring `/media-proxy` URLs; (d) commit `package-lock.json` and use `npm ci`; (e) declare `lodash` (or drop it); (f) consider rotating the Auth Token.
+1. `git fetch && git switch security-hardening && git pull`. This branch already exists (created off `main` at `18a1bf7`) and holds the latest HANDOFF. On `main`, HANDOFF is one commit older.
+2. Start **priority 2: security** on `security-hardening`: work through Open issues → Security, stage (fast-forward `staging` to this branch), test, then release with the user's OK. Suggested order: (a) set `ALLOWED_ORIGIN` in the Console; (b) require caller creds on `/upload-media` and `/get-media`; (c) signed, expiring `/media-proxy` URLs; (d) commit `package-lock.json` and use `npm ci`; (e) declare `lodash` (or drop it); (f) consider rotating the Auth Token.
 3. Then priority 3 (login system): design discussion with the user first.
 
 ## Staging test checklist (MMS)
@@ -88,15 +88,22 @@ Other:
 
 ## Repo state
 
-- 2026-10-29 release: `main` = `staging` = `mms-setup` (all at the release commit). Before the release, production was `d5eb59b`.
-- Branches: `main` (prod), `staging`, `mms-setup` (MMS work, done). Start new work on a fresh branch off `main`. Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
+- `main` = `staging` = `mms-setup` = `18a1bf7` (MMS release). Before the release, production was `d5eb59b`.
+- **Working branch: `security-hardening`** = `main` + HANDOFF-only commits (no deploy is triggered by pushes to it).
+- Branches: `main` (prod), `staging`, `security-hardening` (current), `mms-setup` (done; keep or delete). Older: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`. Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
+
+### 2026-10-29 night (home): production verified, handoff
+- Deploy runs 40768391230 (staging) and 40768399392 (main) succeeded. Live bundles: production and staging both have the Functions URL and the history fix, and no credentials.
+- The user verified production: an MMS with text + image to +14046800340 was delivered (reply "Got it" received), and SMS works.
+- Created `security-hardening` off `main` for priority 2, with this HANDOFF update on it, so documenting didn't trigger a production redeploy (pushes to `main` rebuild production with re-resolved deps until the lockfile is fixed).
+- **Priority 1 (MMS) is complete.**
 
 ### 2026-10-29: MMS released to production
 - The user verified on staging that old sent messages now show and that pasting an image works, then gave an explicit OK and created `PROD_VITE_TWILIO_FUNCTIONS_URL`.
 - Fast-forwarded `main` from `d5eb59b` to the staging commit (no merge commit; `main` was an ancestor) and pushed `mms-setup`, `staging` and `main`. From now on `main` carries the two-site workflow, so pushes to `main` keep `/staging/` alive.
-- Not explicitly re-tested on staging: text+image together, and plain plus multi-recipient SMS (those code paths are unchanged).
+- Not explicitly tested: multi-recipient SMS (code unchanged).
 
 ### 2026-10-29: staging deploy of the MMS fix + conversation history fix
 - With the user's OK, fast-forwarded `staging` to `83fcafd` and pushed. Run 40753083549 succeeded; the live staging bundle contains the new upload error string, which confirms the fix is deployed.
