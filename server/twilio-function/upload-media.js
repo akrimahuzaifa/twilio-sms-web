@@ -40,6 +40,9 @@ const addCorsHeaders = (response, allowedOriginConfig, requestOrigin) => {
     return response
 }
 
+// Sync map items are limited to 16KB of data; leave room for the JSON wrapper
+const SYNC_CHUNK_SIZE = 15000
+
 // Generate unique ID for media
 const generateMediaId = () => {
     const timestamp = Date.now().toString(36)
@@ -111,12 +114,14 @@ exports.handler = async function (context, event, callback) {
 
         // Check approximate size (base64 is ~33% larger than binary)
         const approximateSize = (data.length * 3) / 4
-        const maxSize = 1.5 * 1024 * 1024 // 1.5MB (MMS limit)
+        // Each 15KB chunk is one sequential Sync write; keep the count low enough to finish
+        // well inside the 10s Function timeout. The browser compresses to ~20-150KB first.
+        const maxSize = 400 * 1024
         if (approximateSize > maxSize) {
             response.setStatusCode(400)
             response.setBody(JSON.stringify({
                 error: 'Image too large',
-                details: `Maximum size is 1.5MB for MMS. Current size: ~${Math.round(approximateSize / 1024)}KB`
+                details: `Maximum size is 400KB after compression. Current size: ~${Math.round(approximateSize / 1024)}KB`
             }))
             return callback(null, response)
         }
@@ -149,20 +154,31 @@ exports.handler = async function (context, event, callback) {
             }
         }
 
-        // Store the media data with TTL (auto-delete after 1 hour)
-        await client.sync.v1
+        // A Sync map item holds at most 16KB of data, so store the base64 in chunks:
+        // `${mediaId}_${i}` items with the data, plus a `${mediaId}` item describing them.
+        // All items auto-delete after 1 hour.
+        const chunks = []
+        for (let i = 0; i < data.length; i += SYNC_CHUNK_SIZE) {
+            chunks.push(data.slice(i, i + SYNC_CHUNK_SIZE))
+        }
+        const mapItems = client.sync.v1
             .services(syncServiceSid)
             .syncMaps('mms_media_store')
             .syncMapItems
-            .create({
-                key: mediaId,
-                data: {
-                    base64: data,
-                    contentType: mediaType,
-                    createdAt: new Date().toISOString()
-                },
-                ttl: 3600 // Auto-delete after 1 hour
-            })
+
+        // Sequential: Sync throttles bursts of writes to a single map
+        for (let i = 0; i < chunks.length; i++) {
+            await mapItems.create({ key: `${mediaId}_${i}`, data: { d: chunks[i] }, ttl: 3600 })
+        }
+        await mapItems.create({
+            key: mediaId,
+            data: {
+                chunks: chunks.length,
+                contentType: mediaType,
+                createdAt: new Date().toISOString()
+            },
+            ttl: 3600
+        })
 
         // Generate the public URL for serving this media
         const serveUrl = `https://${context.DOMAIN_NAME}/serve-media?id=${mediaId}`

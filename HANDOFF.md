@@ -24,7 +24,7 @@
 - Code works locally (send + receive verified by the user before this session).
 - Production showed only "Media attachment" placeholders. Root cause: `.env` is gitignored and CI built without `VITE_TWILIO_FUNCTIONS_URL`. Fixed in the workflow, which now reads repo variables.
 - Two-site Pages workflow added so changes can be tested at `/staging/` before touching production.
-- **Not yet verified on staging.** Waiting on the pending user actions below.
+- Staging test (2026-10-28): **receive works** (images show). **Send failed** with 413 at `/upload-media`. Fixed in code (chunked Sync storage, see log); waiting on the user to deploy the functions and re-test.
 
 **Priority 2: security.** Two critical Function holes fixed (2026-10-28; see log). The rest is under Open issues.
 
@@ -37,6 +37,7 @@
 - [x] GitHub → Settings → Environments → `github-pages` → Deployment branches → add `staging` (user confirmed 2026-10-28)
 - [x] Create and push the `staging` branch from `mms-setup` (done 2026-10-28)
 - [x] Confirm the Actions run "Build and publish to GitHub Pages" for `staging` succeeded (run 40604100435, success)
+- [ ] Paste updated `upload-media.js` and `serve-media.js` into the Twilio Console and Deploy All (chunked Sync storage fix, 2026-10-28). No frontend redeploy is needed.
 - [ ] Smoke-test production (sign in, open inbox, send a plain SMS). Its dependencies were re-resolved on this deploy; see Open issues.
 - [ ] Run the staging test checklist below
 - [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
@@ -78,6 +79,13 @@ Other:
 - `staging` = `mms-setup` (pushed 2026-10-28). Branches: `main` (prod), `staging`, `mms-setup` (MMS work). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
+
+### 2026-10-28 (home): MMS send 413 fix
+- **Symptom:** sending on staging gave "Network Error", a CORS error, and `POST /upload-media` returned 413, even though the image was compressed to 29KB.
+- **Root cause:** `upload-media` stored the entire base64 image in ONE Twilio Sync map item, and Sync caps item data at 16KB. Reproduced with curl: 15KB of data returns 201, 18KB returns 413. The edge accepts 100KB+ bodies (checked on `serve-media`). Twilio's CloudFront replaces the error with an HTML 413 page without CORS headers, which is why the browser reported CORS. Sending could never have worked for a real photo. The earlier claim that "send works locally" was an unverified assumption.
+- **Fix:** `upload-media` writes the base64 as 15KB chunks `{id}_0..n` (one at a time, to avoid Sync write throttling) plus a meta item `{id}` = `{chunks, contentType}`. `serve-media` reassembles them and still serves legacy inline `base64` items. Server cap lowered from 1.5MB to 400KB to stay inside the 10s Function timeout.
+- **Verified:** round trip against a mock Sync that enforces the 16KB limit: a 17KB PNG (22.9KB base64) gives 3 writes and a byte-identical serve; legacy item OK; oversize returns 400. The curl probes wrote 2 junk items to Sync (expire 1h).
+- **Not verified:** a real send after the Console deploy.
 
 ### 2026-10-28 (office): MMS on Pages + staging + security fixes
 - **Diagnosis:** the deployed bundle had an empty `VITE_TWILIO_FUNCTIONS_URL` (console: "Twilio Functions not configured"), because `.env` is gitignored and CI had no env. curl confirmed the Functions service is live and CORS allows the Pages origin. Checked the live bundle: it contains no SIDs or API keys.

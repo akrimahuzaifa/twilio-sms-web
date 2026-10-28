@@ -80,8 +80,20 @@ exports.handler = async function (context, event, callback) {
             throw e
         }
 
-        // Get the stored data
-        const { base64, contentType } = mediaItem.data
+        // upload-media stores the base64 in `${id}_${i}` chunks (Sync's 16KB item limit);
+        // items written before chunking hold it inline as `base64`
+        const { chunks, contentType } = mediaItem.data
+        let { base64 } = mediaItem.data
+        if (!base64 && chunks > 0) {
+            const parts = await Promise.all(Array.from({ length: chunks }, (_, i) =>
+                client.sync.v1
+                    .services(syncServiceSid)
+                    .syncMaps('mms_media_store')
+                    .syncMapItems(`${id}_${i}`)
+                    .fetch()
+            ))
+            base64 = parts.map(p => p.data.d).join('')
+        }
 
         if (!base64) {
             response.appendHeader('Content-Type', 'application/json')

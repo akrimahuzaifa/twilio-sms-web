@@ -30,7 +30,8 @@ MediaViewer(messageSid)
 ConversationComposer (attach or paste an image)
   └─ uploadMediaForMms(file)                src/js/sendTwilioMessage.js
        compresses to JPEG ≤600px, q0.5
-       └─ POST {fn}/upload-media            stores base64 in a Twilio Sync map `mms_media_store`, TTL 1h
+       └─ POST {fn}/upload-media            stores base64 in Twilio Sync map `mms_media_store` as 15KB chunks
+                                            (`{id}_0..n` + meta item `{id}`; Sync caps items at 16KB), TTL 1h, max 400KB
             returns {fn}/serve-media?id=media_…   (public URL Twilio can fetch)
   └─ sendTwilioMms(auth, to, from, body, url)
        └─ POST {fn}/send-mms  (Basic auth = the user's creds, body includes accountSid)
@@ -47,7 +48,7 @@ Plain SMS (including multi-recipient sends) always goes directly to the Twilio A
 | `/get-media` | none (open) | service creds | Needs a message SID. Security backlog item. |
 | `/media-proxy` | none (img tags can't send auth) | service creds | Restricted to this account's media paths. Optional `MEDIA_ACCESS_TOKEN`. |
 | `/upload-media` | none (open) | service creds + Sync | Security backlog item: anyone can store images. |
-| `/serve-media` | none (Twilio must fetch it) | service creds + Sync | IDs are random; items expire after 1h. |
+| `/serve-media` | none (Twilio must fetch it) | service creds + Sync | Reassembles chunks. IDs are random; items expire after 1h. |
 | `/send-mms` | **caller's** Basic auth (required) | caller creds | Supports Auth Token and API Key (`SK…` + `accountSid`). |
 
 ## Key files
