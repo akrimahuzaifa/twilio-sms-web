@@ -16,6 +16,14 @@ const buildAuthHeader = (credentials) => {
 }
 
 /**
+ * Twilio Functions double-encode JSON bodies (the response is a JSON string containing JSON),
+ * so axios hands back a string. Accept both shapes.
+ * @param {*} data
+ * @returns {Object}
+ */
+const parseFunctionResponse = data => (typeof data === "string" ? JSON.parse(data) : data)
+
+/**
  * Convert a File or Blob to base64 string
  * @param {File|Blob} file 
  * @returns {Promise<string>}
@@ -120,9 +128,15 @@ export const uploadMediaForMms = async (file) => {
     }
   )
 
+  const data = parseFunctionResponse(response.data)
+  // Without a URL, sendTwilioMms would quietly send a text-only SMS
+  if (!data?.url) {
+    throw new Error("Image upload failed: no media URL returned")
+  }
+
   return {
-    url: response.data.url,
-    mediaId: response.data.mediaId,
+    url: data.url,
+    mediaId: data.mediaId,
   }
 }
 
@@ -185,7 +199,7 @@ const sendMmsViaFunctions = async (authentication, to, from, body, mediaUrl) => 
     }
   )
 
-  return response.data.messageSid
+  return parseFunctionResponse(response.data).messageSid
 }
 
 /**

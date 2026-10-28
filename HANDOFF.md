@@ -1,7 +1,7 @@
 # HANDOFF: αMessage (twilio-sms-web)
 
 > Living document. Read it at the start of every AI session and update it after every patch (see [CLAUDE.md](CLAUDE.md)).
-> Last updated: **2026-10-28** (home machine)
+> Last updated: **2026-10-28 night** (home machine). Next session: office, morning of 2026-10-29. **Start with "Next session: start here" below.**
 
 ## What this is
 
@@ -21,10 +21,13 @@
 ## Current status
 
 **Priority 1: MMS**
-- Code works locally (send + receive verified by the user before this session).
+- Receive was verified locally before this session. Send was never actually verified anywhere until 2026-10-28.
 - Production showed only "Media attachment" placeholders. Root cause: `.env` is gitignored and CI built without `VITE_TWILIO_FUNCTIONS_URL`. Fixed in the workflow, which now reads repo variables.
 - Two-site Pages workflow added so changes can be tested at `/staging/` before touching production.
-- Staging test (2026-10-28): **receive works** (images show). **Send failed** with 413 at `/upload-media`. Fixed in code (chunked Sync storage, see log); waiting on the user to deploy the functions and re-test.
+- Staging test (2026-10-28): **receive works** (images show).
+- Send bug 1, 413 at `/upload-media`: fixed (chunked Sync storage), and the user deployed the functions. Upload now succeeds.
+- Send bug 2: "MMS sent" but it arrives as **text only**. Root cause found, fixed in the client (`dff87c3` + the commit after it), **not yet on staging**. See the log.
+- New bug: old **sent** messages are missing from older conversations. Diagnosed, not fixed. See "Next session".
 
 **Priority 2: security.** Two critical Function holes fixed (2026-10-28; see log). The rest is under Open issues.
 
@@ -37,10 +40,24 @@
 - [x] GitHub → Settings → Environments → `github-pages` → Deployment branches → add `staging` (user confirmed 2026-10-28)
 - [x] Create and push the `staging` branch from `mms-setup` (done 2026-10-28)
 - [x] Confirm the Actions run "Build and publish to GitHub Pages" for `staging` succeeded (run 40604100435, success)
-- [ ] Paste updated `upload-media.js` and `serve-media.js` into the Twilio Console and Deploy All (chunked Sync storage fix, 2026-10-28). No frontend redeploy is needed.
+- [x] Paste updated `upload-media.js` and `serve-media.js` into the Twilio Console and Deploy All (done 2026-10-28; upload no longer 413s)
 - [ ] Smoke-test production (sign in, open inbox, send a plain SMS). Its dependencies were re-resolved on this deploy; see Open issues.
 - [ ] Run the staging test checklist below
 - [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
+
+## Next session: start here (office, 2026-10-29)
+
+1. `git pull` on `mms-setup`, then read this file.
+2. **Deploy the text-only-MMS fix to staging** (needs the user's OK to push): `git switch staging && git merge --ff-only mms-setup && git push origin staging && git switch mms-setup`. Watch the Actions run.
+3. The user sends an MMS from staging to a test phone (ideally their own phone, so delivery can be confirmed without waiting on others). Verify with the Twilio API: the newest message `From=+14694377816` should have `num_media=1`. A read-only check script is in the log entry for 2026-10-28 night.
+4. **Fix missing old sent messages** (diagnosis below), on `mms-setup`, then stage.
+5. Continue the staging checklist; also the production smoke test.
+
+### Diagnosis: old sent messages missing from conversations
+- `src/component/InboxPage/getMessages.js` calls `getTwilioMessages(phoneNumber)` (From) and `getTwilioMessages(undefined, phoneNumber)` (To) with **no PageSize and no paging**. Twilio returns 50 per page, newest first.
+- +14694377816 has **128 sent** messages since 2025-12-03, so only the newest 50 sent and newest 50 received are loaded. Older test conversations (+12674715851, +14046800340, +17733978211, +14046800905) keep their received side because inbound volume is lower, but lose the sent side.
+- Same pattern in `ConversationPage.jsx` (`getTwilioMessages(from,to)` + `(to,from)`).
+- Fix options: (a) when a contact is selected, fetch that conversation specifically (`From=our&To=contact` + `From=contact&To=our`, which is small and complete) and merge it into the thread. The inbox list can stay "recent". (b) Follow `next_page_uri` / larger `PageSize` for the list. Prefer (a), plus a modest PageSize bump for the list. Mind the polling interval: don't page through everything on every poll.
 
 ## Staging test checklist (MMS)
 
@@ -68,6 +85,7 @@ Security (priority 2):
 - Functions are deployed by hand-pasting. Consider the Twilio Serverless Toolkit (`twilio serverless:deploy`) driven from CI.
 
 Other:
+- Server-side cleanup option: return objects instead of `JSON.stringify(...)` from Functions to avoid double encoding. The client now tolerates both, so this is optional and needs a Console deploy.
 - `package-lock.json` is gitignored, so CI `npm install` resolves the latest semver-compatible deps on every build, and builds aren't reproducible. Production was rebuilt with fresh deps on 2026-10-28 (bundle hash changed CpX3Z6tI → FQJ4PsJg, same app code). Fix: un-ignore and commit the lockfile, use `npm ci` in CI (do it on staging first).
 - ~29 pre-existing ESLint errors.
 - Shared Functions service across staging and prod: function changes must stay compatible with what's on `main`.
@@ -79,6 +97,17 @@ Other:
 - `staging` = `mms-setup` (pushed 2026-10-28). Branches: `main` (prod), `staging`, `mms-setup` (MMS work). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
+
+### 2026-10-28 night (home): MMS arrives as text only
+- **User report:** after the chunking deploy, staging said "MMS sent" to 2 numbers, but the thread showed only the footer text and no image.
+- **Evidence (read-only Twilio API, using local `.env` API key):** the latest two messages from +14694377816 (to +17733978211 and +14046800340) were `delivered`, `error_code=null`, **`num_media=0`**. Twilio never received a MediaUrl; a failed media fetch would have failed the message instead.
+- **Root cause:** Twilio Functions **double-encode JSON**. `curl /upload-media` returns `Content-Type: application/json` with the body `"{\"success\":true,...,\"url\":...}"` (a JSON string). axios gives back a string, so `response.data.url` is undefined. `sendTwilioMms` treats an empty mediaUrl as "no media" and quietly sends a plain SMS. `getTwilioMedia.js` already had a workaround for this; the send path didn't.
+- **Fix (client only, no Console deploy needed):** `parseFunctionResponse()` in `src/js/sendTwilioMessage.js` handles both the upload and the send-mms responses. `uploadMediaForMms` now throws if no URL comes back, instead of falling through to SMS.
+- **Verified:** parsing the real captured body gives the URL (the old code gives undefined); the staging build passes; no lint errors in the file.
+- **Not verified:** a real MMS send after the fix (not deployed to staging yet; see Next session).
+- Also found: the missing old sent messages are caused by the 50-per-page default (see the diagnosis above).
+- Junk Sync items from curl tests expire within 1h.
+- Read-only check used (bash, repo root): `set -a; . ./.env; set +a; node -e` with fetch to `/2010-04-01/Accounts/$SID/Messages.json?From=%2B14694377816&PageSize=8`, Basic auth = API key:secret, printing status/error_code/num_media.
 
 ### 2026-10-28 (home): MMS send 413 fix
 - **Symptom:** sending on staging gave "Network Error", a CORS error, and `POST /upload-media` returned 413, even though the image was compressed to 29KB.
