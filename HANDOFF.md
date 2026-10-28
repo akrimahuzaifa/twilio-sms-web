@@ -14,8 +14,8 @@
 
 ## Priorities (set by the user)
 
-1. **Deliver MMS send + receive.** ← current
-2. Secure the current setup (Functions, credentials, front end).
+1. **Deliver MMS send + receive.** ✅ Released to production 2026-10-29.
+2. Secure the current setup (Functions, credentials, front end). ← next
 3. Proper login system (backend/DB, or serverless via Twilio Functions + Sync) instead of everyone typing Account SID + API key/secret.
 
 ## Current status
@@ -27,7 +27,8 @@
 - Staging test (2026-10-28): **receive works** (images show).
 - Send bug 1, 413 at `/upload-media`: fixed (chunked Sync storage), and the user deployed the functions. Upload now succeeds.
 - Send bug 2: "MMS sent" but it arrives as **text only**. Fixed in `83fcafd`, deployed to staging 2026-10-29 (run 40753083549). **Verified by the user 2026-10-29:** an MMS sent from staging to +14046800340 arrived with the image, and the recipient's reply MMS showed in the thread. **MMS send + receive works on staging.**
-- Missing old **sent** messages in conversations: fixed 2026-10-29, committed and staged with the user's OK. The user still needs to check it in the browser.
+- Missing old **sent** messages in conversations: fixed 2026-10-29 and **verified by the user on staging**.
+- **Released to production 2026-10-29** (user OK): `main` fast-forwarded to the staging commit, with `PROD_VITE_TWILIO_FUNCTIONS_URL` set by the user. Rollback: delete that variable and re-run the workflow (MMS off, no code revert).
 
 **Priority 2: security.** Two critical Function holes fixed (2026-10-28; see log). The rest is under Open issues.
 
@@ -43,14 +44,14 @@
 - [x] Paste updated `upload-media.js` and `serve-media.js` into the Twilio Console and Deploy All (done 2026-10-28; upload no longer 413s)
 - [ ] Smoke-test production (sign in, open inbox, send a plain SMS). Its dependencies were re-resolved on this deploy; see Open issues.
 - [ ] Run the staging test checklist below
-- [ ] Release to production (steps in docs/DEPLOYMENT.md → "Releasing MMS to production"). Needs explicit OK.
+- [x] Release to production (user OK and `PROD_VITE_TWILIO_FUNCTIONS_URL` created 2026-10-29)
+- [ ] Production check after the release (see Next session)
 
 ## Next session: start here
 
-1. ~~Send an MMS from staging~~ Done 2026-10-29: delivered with the image, and the reply MMS was received.
-2. **User:** on staging, check that old test conversations (+12674715851, +14046800340, +14046800905) now show their sent messages.
-3. Finish the staging checklist and the production smoke test, then decide on release (docs/DEPLOYMENT.md).
-4. After release: priority 2 (security backlog under Open issues).
+1. If not done: the user does a production check (Ctrl+F5 on the live URL, an MMS conversation shows images, the paperclip is visible, a plain SMS sends).
+2. Start **priority 2: security**. Work through Open issues → Security, on a new branch off `main` (e.g. `security-hardening`), stage, then release. Suggested order: (a) set `ALLOWED_ORIGIN` in the Console; (b) require caller creds on `/upload-media` and `/get-media`; (c) signed, expiring `/media-proxy` URLs; (d) commit `package-lock.json` and use `npm ci`; (e) declare `lodash` (or drop it); (f) consider rotating the Auth Token.
+3. Then priority 3 (login system): design discussion with the user first.
 
 ## Staging test checklist (MMS)
 
@@ -60,7 +61,7 @@ On https://akrimahuzaifa.github.io/twilio-sms-web/staging/ (check the orange STA
 - [x] An existing MMS conversation (e.g. +17733978211) shows the images, not placeholders (2026-10-28)
 - [x] Attach button (paperclip) is visible in the reply box
 - [x] Send an image via the paperclip to a test phone. It arrives, and the image appears in the thread after refresh (2026-10-29)
-- [ ] Send an image via paste (Ctrl+V)
+- [x] Send an image via paste (Ctrl+V) (2026-10-29)
 - [ ] Send text + image together; the footer text is present
 - [x] Reply with an MMS from the phone. It shows up in the inbox with the image (2026-10-29)
 - [ ] Plain SMS and multi-recipient SMS still work
@@ -87,10 +88,15 @@ Other:
 
 ## Repo state
 
-- Working branch: `mms-setup`. `main` = `origin/main` = production = `d5eb59b` (unchanged).
-- `staging` = `mms-setup` (pushed 2026-10-28). Branches: `main` (prod), `staging`, `mms-setup` (MMS work). Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
+- 2026-10-29 release: `main` = `staging` = `mms-setup` (all at the release commit). Before the release, production was `d5eb59b`.
+- Branches: `main` (prod), `staging`, `mms-setup` (MMS work, done). Start new work on a fresh branch off `main`. Older ones: `ahk-dev`, `ahk-ux-enhancements`, `notification-system`, `backup/production-recovery`.
 
 ## Session log
+
+### 2026-10-29: MMS released to production
+- The user verified on staging that old sent messages now show and that pasting an image works, then gave an explicit OK and created `PROD_VITE_TWILIO_FUNCTIONS_URL`.
+- Fast-forwarded `main` from `d5eb59b` to the staging commit (no merge commit; `main` was an ancestor) and pushed `mms-setup`, `staging` and `main`. From now on `main` carries the two-site workflow, so pushes to `main` keep `/staging/` alive.
+- Not explicitly re-tested on staging: text+image together, and plain plus multi-recipient SMS (those code paths are unchanged).
 
 ### 2026-10-29: staging deploy of the MMS fix + conversation history fix
 - With the user's OK, fast-forwarded `staging` to `83fcafd` and pushed. Run 40753083549 succeeded; the live staging bundle contains the new upload error string, which confirms the fix is deployed.
